@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
-
+#include "Logging.h"
+// defines the log category declared in logging.h
 class FDialogEdModule : public IModuleInterface
 {
 public:

@@ -26,6 +26,7 @@ public class DialogEd : ModuleRules
 			new string[]
 			{
 				"Core",
+				"DasKombinat"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -38,6 +39,7 @@ public class DialogEd : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"DasKombinat"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
