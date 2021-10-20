@@ -12,9 +12,9 @@
 class DIALOGED_API FPreparedCommand {
     UDialogueCommand* logic;
     TArray<FString> arguments;
-    AActor* targetActor;
+    class UDialogueActor* targetActor;
 public:
-    FPreparedCommand(UDialogueCommand* command, TArray<FString> args, AActor* targetActor);
+    FPreparedCommand(UDialogueCommand* command, TArray<FString> args, UDialogueActor* targetActor);
     ~FPreparedCommand();
     bool Verify() const;
     void Run() const;

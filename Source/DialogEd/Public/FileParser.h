@@ -9,6 +9,7 @@
  */
 class DIALOGED_API FileParser {
     TArray<FString> fileLines;
+    class UDataTable* targetDataTable;
 public:
     FileParser(FString fileName);
     ~FileParser();
