@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "DialogueActor.h"
 
 #include "DialogueData.generated.h"
 
@@ -7,7 +8,7 @@ struct FDialogueData {
     GENERATED_BODY()
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    FString speaker;
+    UDialogueActor* speaker;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     FColor textBaseColor;
@@ -16,11 +17,13 @@ struct FDialogueData {
     FString message;
 
     FDialogueData() {
-        speaker = "";
+        speaker = nullptr;
         textBaseColor = FColor::White;
         message = ""; 
     }
-    FDialogueData(const FString name, const FColor color, const FString message)
-    : speaker(name), textBaseColor(color), message(message) {
+    FDialogueData(UDialogueActor* actor, const FString message) {
+        this->message = message;
+        speaker = actor;
+        textBaseColor = actor->GetBaseTextColor();
     }
 };

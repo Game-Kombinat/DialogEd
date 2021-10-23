@@ -29,7 +29,7 @@ void USpeakCommand::Execute(UDialogueActor* target, FString arg) {
         return;
     }
     
-    messageManager->Begin(FDialogueData(target->GetActorName(), target->GetBaseTextColor(), arg));
+    messageManager->Begin(FDialogueData(target, target->GetBaseTextColor(), arg));
 }
 
 bool USpeakCommand::IsFinished() {
