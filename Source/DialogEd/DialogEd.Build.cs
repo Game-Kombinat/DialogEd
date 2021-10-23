@@ -39,6 +39,7 @@ public class DialogEd : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"UMG",
 				"DasKombinat"
 				// ... add private dependencies that you statically link with here ...	
 			}

@@ -8,14 +8,15 @@
 void USpeechBubbleWidget::MakeVisible() {
     currentState = EBubbleState::Opening;
     
-    FSlateColor startTintColor = FSlateColor(FLinearColor(1, 1, 1, 0));
-    FSlateColor endTintColor = FSlateColor(FLinearColor(1, 1, 1, 1));
+    FLinearColor startTintColor = FLinearColor(1, 1, 1, 0);
+    FLinearColor endTintColor = FLinearColor(1, 1, 1, 1);
     FVector2D startScale = FVector2D::ZeroVector;
     FVector2D endScale = FVector2D::UnitVector;
 
     FInterpolator::Anim8(GetWorld(), .15, true,
                          [&, startTintColor, endTintColor, startScale, endScale](const float t) {
-                             bubbleFrame->Background.TintColor = FMath::Lerp(startTintColor, endTintColor, t);
+                             
+                             bubbleFrame->Background.TintColor = FLinearColor::LerpUsingHSV(startTintColor, endTintColor, t);
                              bubbleFrame->RenderTransform.Scale = FMath::Lerp(startScale, endScale, t);
                          },
                          [&]() {
@@ -28,14 +29,14 @@ void USpeechBubbleWidget::MakeVisible() {
 void USpeechBubbleWidget::MakeInvisible() {
     currentState = EBubbleState::Closing;
     
-    FSlateColor startTintColor = FSlateColor(FLinearColor(1, 1, 1, 1));
-    FSlateColor endTintColor = FSlateColor(FLinearColor(1, 1, 1, 0));
+    FLinearColor startTintColor = FLinearColor(1, 1, 1, 1);
+    FLinearColor endTintColor = FLinearColor(1, 1, 1, 0);
     FVector2D startScale = FVector2D::UnitVector;
     FVector2D endScale = FVector2D::ZeroVector;
 
     FInterpolator::Anim8(GetWorld(), .15, true,
                          [&, startTintColor, endTintColor, startScale, endScale](const float t) {
-                             bubbleFrame->Background.TintColor = FMath::Lerp(startTintColor, endTintColor, t);
+                             bubbleFrame->Background.TintColor = FLinearColor::LerpUsingHSV(startTintColor, endTintColor, t);
                              bubbleFrame->RenderTransform.Scale = FMath::Lerp(startScale, endScale, t);
                          },
                          [&]() {
@@ -66,8 +67,15 @@ void USpeechBubbleWidget::Show(FDialogueData dataToShow) {
     defaultStyle.ColorAndOpacity = FSlateColor(dataToShow.textBaseColor);
     message->SetDefaultTextStyle(defaultStyle);
     PrepareBubble();
+    MakeVisible();
+}
+
+void USpeechBubbleWidget::Hide() {
+    MakeInvisible();
+    currentDialogueData = FDialogueData();
 }
 
 void USpeechBubbleWidget::NativeTick(const FGeometry& myGeometry, float inDeltaTime) {
     Super::NativeTick(myGeometry, inDeltaTime);
+    // todo: when we actually get speech bubbles, this is the place to update position and stuff
 }

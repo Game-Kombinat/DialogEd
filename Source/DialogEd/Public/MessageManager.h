@@ -20,6 +20,7 @@ public:
     void Attach(FString message);
 
     // todo: BeginChoices(FDialogueChoiceData)
+    // todo: SetSelectedChoice(int)
 
     /**
      * Forces the message rendering system to advance. When text is still being "typed",
@@ -31,5 +32,5 @@ public:
     /** Returns true when the message rendering is done and the whole text is shown. */
     bool IsDone();
 
-    // todo: int GetSelectedChoice(); // to be called after IsDone returns true, at which time manager must have set the selected choice.
+    // todo: int GetSelectedChoice(); // to be called after IsDone returns true, at which message manager must have set the selected choice.
 };

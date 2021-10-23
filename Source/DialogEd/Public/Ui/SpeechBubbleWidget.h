@@ -63,6 +63,7 @@ public:
      * Kicks off a process on this speech bubble to show the dialogue data.
      */
     void Show(FDialogueData dataToShow);
+    void Hide();
     
     // Need this ticking to handle animation and state and position
     virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
