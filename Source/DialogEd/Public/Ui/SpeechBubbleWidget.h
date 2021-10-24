@@ -17,15 +17,18 @@ UCLASS()
 class DIALOGED_API USpeechBubbleWidget : public UUserWidget {
     GENERATED_BODY()
 protected:
-    // this is what is in unity known s canvasgroup. or at least it can do the same thing with the alpha value.
+    // We can use this similar to unitars canvasgroup.
+    // really, all widgets with child slots apparently have render opacity so ... that's cool.
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category="Bubble Setup")
-    class UBorder* bubbleFrame; 
+    class UVerticalBox* verticalBox; 
+    UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category="Bubble Setup")
+    class USizeBox* bubbleContainer;
     
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category="Bubble Setup")
     class URichTextBlock* message;
 
-    UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category="Bubble Setup")
-    class UImage* tail;
+    // UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category="Bubble Setup")
+    // class UImage* tail;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Runtime References")
     class UDialogueActor* dialogueActor;
@@ -62,11 +65,18 @@ public:
     /**
      * Kicks off a process on this speech bubble to show the dialogue data.
      */
-    void Show(FDialogueData dataToShow);
+    void PrepareForDisplay(FDialogueData dataToShow, FVector2D maxBoundSize, int drawOrder);
+    void Show();
     void Hide();
     
     // Need this ticking to handle animation and state and position
     virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
     virtual void NativeConstruct() override;
+
+    FVector2D GetUnscaledSize() const;
+    
+    void SetSizeBoxBounds(FVector2D maxDesired) const;
+
+    void SetPosition(FVector2D position);
 };
