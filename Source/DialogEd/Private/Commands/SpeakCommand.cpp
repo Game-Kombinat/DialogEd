@@ -29,7 +29,7 @@ void USpeakCommand::Execute(UDialogueActor* target, FString arg) {
         return;
     }
     
-    messageManager->Begin(FDialogueData(target, arg));
+    messageManager->Begin(FRuntimeDialogueData(target, arg));
 }
 
 bool USpeakCommand::IsFinished() {

@@ -3,8 +3,6 @@
 
 #include "StoryThread.h"
 
-#include "PreparedCommand.h"
-
 UStoryThread::UStoryThread() {
     threadName = "Unnamed Thread";
     threadPointer = 0;
@@ -15,18 +13,18 @@ UStoryThread::UStoryThread(FString displayName) {
     threadPointer = 0;
 }
 
-void UStoryThread::AddCommand(UClass* commandClass) {
-    commandStack.Add(commandClass);
+void UStoryThread::AddCommand(const FParsedCommand command) {
+    commandStack.Add(command);
 }
 
-bool UStoryThread::CanContinue() {
+bool UStoryThread::CanContinue() const {
     return threadPointer < commandStack.Num();
 }
 
-FPreparedCommand UStoryThread::GetNext() {
-    // auto c = NewObject<IDialogueCommand>(this, commandStack[threadPointer++]);
-    // auto prep = FPreparedCommand(c);
-    // return commandStack[threadPointer++];
-    // todo: this is shit, shouldn't split here.
-    return FPreparedCommand(nullptr, TArray<FString>(), nullptr);
+FParsedCommand UStoryThread::GetNext() {
+    return commandStack[threadPointer++];
+}
+
+void UStoryThread::ResetThread() {
+    threadPointer = 0;
 }

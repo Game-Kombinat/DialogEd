@@ -3,11 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DialogueData.h"
 #include "Interpolator.h"
 #include "SpeechBubbleTypes.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/Border.h"
+#include "Commands/RuntimeDialogueData.h"
 #include "SpeechBubbleWidget.generated.h"
 
 /**
@@ -36,7 +35,7 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Runtime References")
     UUserWidget* parentWidget;
 
-    FDialogueData currentDialogueData;
+    FRuntimeDialogueData currentDialogueData;
 
     FInterpolator interp;
     EBubbleState currentState;
@@ -65,7 +64,7 @@ public:
     /**
      * Kicks off a process on this speech bubble to show the dialogue data.
      */
-    void PrepareForDisplay(FDialogueData dataToShow, FVector2D maxBoundSize, int drawOrder);
+    void PrepareForDisplay(FRuntimeDialogueData dataToShow, FVector2D maxBoundSize, int drawOrder);
     void Show();
     void Hide();
     

@@ -12,35 +12,31 @@
 
 void USpeechBubbleWidget::MakeVisible() {
     currentState = EBubbleState::Opening;
-    FAnim8Sample sample;
-    sample.BindLambda([&](const float t) {
-        verticalBox->SetRenderOpacity(t);
-        verticalBox->SetRenderScale(FMath::Lerp(FVector2D::ZeroVector, FVector2D::UnitVector, t));
-    });
-
-    FAnim8Done done;
-    done.BindLambda([&]() {
-        // it makes no sense atm, it should be "Open" but we _will_ have a typewriter effect
-        // at some point and then this is where the writing effect will begin.
-        currentState = EBubbleState::Writing;
-    });
-    LOG_INFO("Begin showing bubble!")
-    FInterpolator::Anim8(GetWorld(), .15, true, sample, done);
+    FInterpolator::Anim8(GetWorld(), .15, true,
+        [&](const float t) {
+            verticalBox->SetRenderOpacity(t);
+            verticalBox->SetRenderScale(FMath::Lerp(FVector2D::ZeroVector, FVector2D::UnitVector, t));
+        }, [&]() {
+            // it makes no sense atm, it should be "Open" but we _will_ have a typewriter effect
+            // at some point and then this is where the writing effect will begin.
+            currentState = EBubbleState::Writing;
+        }
+    );
 }
 
 void USpeechBubbleWidget::MakeInvisible() {
     currentState = EBubbleState::Closing;
-
     FInterpolator::Anim8(GetWorld(), .15, true,
-                         [this](const float t) {
-                             verticalBox->SetRenderOpacity(t);
-                             verticalBox->SetRenderScale(FMath::Lerp(FVector2D::UnitVector, FVector2D::ZeroVector, t));
+        [this](const float t) {
+            verticalBox->SetRenderOpacity(t);
+            verticalBox->SetRenderScale(FMath::Lerp(FVector2D::UnitVector, FVector2D::ZeroVector, t));
 
-                         },
-                         [this]() {
-                             currentState = EBubbleState::Closed;
-                             RemoveFromViewport();
-                         });
+        },
+        [this]() {
+            currentState = EBubbleState::Closed;
+            RemoveFromViewport();
+        }
+    );
 }
 
 void USpeechBubbleWidget::PrepareBubble() {
@@ -60,7 +56,6 @@ void USpeechBubbleWidget::NativeConstruct() {
 
 FVector2D USpeechBubbleWidget::GetUnscaledSize() const {
     return verticalBox->GetDesiredSize();
-    //return bubbleContainer->GetDesiredSize();
 }
 
 void USpeechBubbleWidget::SetSizeBoxBounds(FVector2D maxDesired) const {
@@ -78,15 +73,14 @@ void USpeechBubbleWidget::SetPosition(FVector2D position) {
     canvasSlot->SetDesiredPosition(position);
 }
 
-void USpeechBubbleWidget::PrepareForDisplay(FDialogueData dataToShow, FVector2D maxBoundSize, int drawOrder) {
+void USpeechBubbleWidget::PrepareForDisplay(FRuntimeDialogueData dataToShow, FVector2D maxBoundSize, int drawOrder) {
     AddToViewport(drawOrder);
     currentDialogueData = dataToShow;
     message->TakeWidget(); // ensures underlying slate widget exists ...
     message->SetText(FText::FromString(dataToShow.message));
-    
+
     auto defaultStyle = message->GetCurrentDefaultTextStyle();
     message->SetDefaultColorAndOpacity(FSlateColor(dataToShow.textBaseColor));
-    //message->SetDefaultTextStyle(defaultStyle);
 
     verticalBox->SetRenderOpacity(1);
     verticalBox->SetRenderScale(FVector2D::UnitVector);
@@ -101,7 +95,7 @@ void USpeechBubbleWidget::Show() {
 
 void USpeechBubbleWidget::Hide() {
     MakeInvisible();
-    currentDialogueData = FDialogueData();
+    currentDialogueData = FRuntimeDialogueData();
 }
 
 void USpeechBubbleWidget::NativeTick(const FGeometry& myGeometry, float inDeltaTime) {

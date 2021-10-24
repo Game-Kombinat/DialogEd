@@ -30,12 +30,18 @@ void UMessagingWidget::NativeConstruct() {
     Super::NativeConstruct();
     for (int i = 0; i < 3; ++i) {
         auto bubbleWidget = Cast<USpeechBubbleWidget>(CreateWidgetInstance(*this, bubbleType, FName(FString::Format(TEXT("Bubble {0}"), {i}))));
-        
         loadedWidgets.Add(bubbleWidget);
     }
 }
 
-void UMessagingWidget::BeginMessage(FDialogueData messageData) {
+void UMessagingWidget::NativeDestruct() {
+    Super::NativeDestruct();
+    // Not sure we need it. Unreal usually cleans up all the stuff on its own but lets go with it.
+    loadedWidgets.Empty();
+    activeWidgets.Empty();
+}
+
+void UMessagingWidget::BeginMessage(FRuntimeDialogueData messageData) {
     // get widgets from loadedWidgets list add to screen.
     // remove from loadedWidgets list.
     // add to activeWidgets list and start the widget rendering routine.
@@ -75,4 +81,8 @@ void UMessagingWidget::Close() {
     widget->Hide(); // removes itself from viewport at the end
     activeWidgets.Remove(widget);
     loadedWidgets.Add(widget);
+}
+
+bool UMessagingWidget::IsDisplayingMessage() const {
+    return activeWidgets.Num() > 0; // trollolol
 }

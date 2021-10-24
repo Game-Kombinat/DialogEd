@@ -10,7 +10,7 @@ FMessageManager::FMessageManager() {
 FMessageManager::~FMessageManager() {
 }
 
-void FMessageManager::Begin(FDialogueData data) {
+void FMessageManager::Begin(FRuntimeDialogueData data) {
 }
 
 void FMessageManager::Attach(FString message) {

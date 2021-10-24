@@ -1,10 +1,13 @@
 ﻿#pragma once
 #include "DialogueActor.h"
 
-#include "DialogueData.generated.h"
+#include "RuntimeDialogueData.generated.h"
 
+/**
+ * This is produced by a speak command and then passed into the dialogue manager.
+ */
 USTRUCT(BlueprintType)
-struct FDialogueData {
+struct FRuntimeDialogueData {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -16,12 +19,12 @@ struct FDialogueData {
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString message;
 
-    FDialogueData() {
+    FRuntimeDialogueData() {
         speaker = nullptr;
         textBaseColor = FColor::White;
         message = ""; 
     }
-    FDialogueData(UDialogueActor* actor, const FString message) {
+    FRuntimeDialogueData(UDialogueActor* actor, const FString message) {
         this->message = message;
         speaker = actor;
         textBaseColor = actor->GetBaseTextColor();

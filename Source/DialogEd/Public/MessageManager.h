@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DialogueData.h"
+#include "Commands/RuntimeDialogueData.h"
 
 /**
  * Manages messages and commands that are sent to the dialogue
@@ -14,7 +14,7 @@ public:
     ~FMessageManager();
 
     /** Dispatches a dialogue piece to the dialogue renderer. */
-    void Begin(FDialogueData data);
+    void Begin(FRuntimeDialogueData data);
     
     /** Attaches the given message to the already existing text on screen. */
     void Attach(FString message);
