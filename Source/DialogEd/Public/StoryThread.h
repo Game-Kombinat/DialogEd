@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "ParsedCommand.h"
-#include "UObject/Object.h"
 #include "StoryThread.generated.h"
 
 /**
@@ -14,10 +13,11 @@
  *
  * This is part of raw parsed data from the input text. It is part of a story which is a piece of DataAsset.
  */
-UCLASS()
-class DIALOGED_API UStoryThread : public UObject {
-protected:
+USTRUCT(BlueprintType)
+struct DIALOGED_API FStoryThread {
     GENERATED_BODY()
+protected:
+    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     FString threadName;
     
@@ -29,8 +29,8 @@ protected:
     int threadPointer;
     
 public:
-    UStoryThread();
-    explicit UStoryThread(FString displayName);
+    FStoryThread();
+    explicit FStoryThread(FString displayName);
 
     void AddCommand(FParsedCommand command);
 

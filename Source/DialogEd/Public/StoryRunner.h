@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PreparedCommand.h"
+#include "StoryThread.h"
 #include "Components/ActorComponent.h"
 #include "StoryRunner.generated.h"
 
@@ -14,9 +15,8 @@ UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DIALOGED_API UStoryRunner : public UActorComponent {
     GENERATED_BODY()
     
-    UPROPERTY(VisibleAnywhere)
-    class UStoryThread* currentThread;
-
+    FStoryThread* currentThread;
+    
     FPreparedCommand currentCommand;
 
 protected:
@@ -36,8 +36,7 @@ protected:
 public:
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-    UFUNCTION(BlueprintCallable)
-    void StartNewStoryThread(UStoryThread* story);
+    void StartNewStoryThread(FStoryThread* story);
 
 
 };

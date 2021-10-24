@@ -14,8 +14,7 @@ UStoryRunner::UStoryRunner() {
     // Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
     // off to improve performance if you don't need them.
     PrimaryComponentTick.bCanEverTick = true;
-
-    // ...
+    // currentThread = emptyThread;
 }
 
 
@@ -31,11 +30,8 @@ void UStoryRunner::BeginPlay() {
 // Called every frame
 void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    if (!currentThread) {
-        SetComponentTickEnabled(false);
-        return;
-    }
-    if (!currentThread->CanContinue()) {
+    
+    if (!currentThread || !currentThread->CanContinue()) {
         SetComponentTickEnabled(false);
         return;
     }
@@ -70,7 +66,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     }
 }
 
-void UStoryRunner::StartNewStoryThread(UStoryThread* story) {
+void UStoryRunner::StartNewStoryThread(FStoryThread* story) {
     if (currentThread && currentThread->CanContinue()) {
         LOG_ERROR("Attempted to override already running story thread.");
         return;

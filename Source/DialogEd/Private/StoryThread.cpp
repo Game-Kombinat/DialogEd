@@ -3,28 +3,28 @@
 
 #include "StoryThread.h"
 
-UStoryThread::UStoryThread() {
+FStoryThread::FStoryThread() {
     threadName = "Unnamed Thread";
     threadPointer = 0;
 }
 
-UStoryThread::UStoryThread(FString displayName) {
+FStoryThread::FStoryThread(FString displayName) {
     threadName = displayName;
     threadPointer = 0;
 }
 
-void UStoryThread::AddCommand(const FParsedCommand command) {
+void FStoryThread::AddCommand(const FParsedCommand command) {
     commandStack.Add(command);
 }
 
-bool UStoryThread::CanContinue() const {
+bool FStoryThread::CanContinue() const {
     return threadPointer < commandStack.Num();
 }
 
-FParsedCommand UStoryThread::GetNext() {
+FParsedCommand FStoryThread::GetNext() {
     return commandStack[threadPointer++];
 }
 
-void UStoryThread::ResetThread() {
+void FStoryThread::ResetThread() {
     threadPointer = 0;
 }

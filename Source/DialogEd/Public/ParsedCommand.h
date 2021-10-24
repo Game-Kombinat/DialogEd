@@ -30,14 +30,6 @@ struct FParsedCommand {
         targetActor = "none";
     }
 
-    FParsedCommand(const FString name, const FString args) : commandName(name) {
-        int idx;
-        if (args.FindChar(' ', idx)) {
-            targetActor = UKismetStringLibrary::GetSubstring(args, 0, idx);
-            argumentList = args.RightChop(idx);
-        }
-        else {
-            LOG_ERROR("Failed to parse the text command %s with argument list %s", *name, *args);
-        }
+    FParsedCommand(const FString name, const FString actorName, const FString args) : commandName(name), targetActor(actorName), argumentList(args) {
     }
 };
