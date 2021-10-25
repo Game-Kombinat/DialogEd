@@ -19,5 +19,11 @@ protected:
 
     FStoryThread* GetThread(FString threadName);
 public:
+#if WITH_EDITOR
+    UPROPERTY()
+    UAssetImportData* assetImportData;
+    virtual void PostInitProperties() override;
+#endif
+    
     void SetThreads(TArray<FStoryThread> threads);
 };
