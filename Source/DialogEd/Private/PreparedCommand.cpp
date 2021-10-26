@@ -51,3 +51,9 @@ void FPreparedCommand::Run() const {
     }
     
 }
+
+void FPreparedCommand::Cleanup() const {
+    if (logic) {
+        logic->Cleanup();
+    }
+}

@@ -28,14 +28,27 @@ void USpeakCommand::Execute(UDialogueActor* target, FString arg) {
         LOG_ERROR("No MessageManager in Speak command.")
         return;
     }
+    LOG_INFO("Begin Speak Command");
+    inputActionDelegate.BindDynamic(this, &USpeakCommand::OnActionPressed);
+    messageManager->messaging->BeginListenToInputAction(messageManager->GetActionName(), inputActionDelegate);
     
     messageManager->Begin(FRuntimeDialogueData(target, arg));
 }
 
 bool USpeakCommand::IsFinished() {
     if (!messageManager) {
-        LOG_WARNING("No message manager is SpeakCommand::IsFinished!");
+        LOG_WARNING("No message manager in SpeakCommand::IsFinished!");
         return true;
     }
     return messageManager->IsDone();
+}
+
+void USpeakCommand::Cleanup() {
+    LOG_INFO("Clean up Speak Command");
+    messageManager->messaging->StopListeningToInputAction(messageManager->GetActionName());
+    inputActionDelegate.Unbind();
+}
+
+void USpeakCommand::OnActionPressed() {
+    messageManager->Advance();
 }

@@ -23,7 +23,7 @@ void USpeechBubbleWidget::MakeVisible() {
 
     FAnim8Done done;
     done.BindLambda([&]() {
-        currentState = EBubbleState::Writing;
+        currentState = EBubbleState::Waiting; // it has to be "Writing" when we go text writer effect.
     });
     FInterpolator::Anim8(GetWorld(), .15, true, sample, done);
 }
@@ -83,6 +83,15 @@ void USpeechBubbleWidget::SetPosition(FVector2D position) {
     }
     // canvasSlot->SetPosition(position);
     canvasSlot->SetDesiredPosition(position);
+}
+
+bool USpeechBubbleWidget::IsWriting() const {
+    return currentState != EBubbleState::Opening && currentState == EBubbleState::Writing;
+}
+
+void USpeechBubbleWidget::Advance() {
+    // todo: this would put writing to open state and make all writing text visible
+    currentState = EBubbleState::Waiting;
 }
 
 void USpeechBubbleWidget::PrepareForDisplay(FRuntimeDialogueData dataToShow, FVector2D maxBoundSize, int drawOrder) {

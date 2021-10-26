@@ -78,4 +78,6 @@ public:
     void SetSizeBoxBounds(FVector2D maxDesired) const;
 
     void SetPosition(FVector2D position);
+    bool IsWriting() const;
+    void Advance();
 };

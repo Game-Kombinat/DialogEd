@@ -6,15 +6,14 @@
 #include "Logging.h"
 
 
-FMessageManager::FMessageManager(): hasAdvanced(false), messaging(nullptr) {
+FMessageManager::FMessageManager(): messaging(nullptr) {
 }
 
 FMessageManager::~FMessageManager() {
 }
 
-void FMessageManager::Begin(FRuntimeDialogueData data) {
+void FMessageManager::Begin(FRuntimeDialogueData data) const {
     if (messaging) {
-        hasAdvanced = false;
         messaging->BeginMessage(data);
     }
 }
@@ -23,18 +22,11 @@ void FMessageManager::Attach(FString message) {
     // not implemented just yet.
 }
 
-void FMessageManager::Advance() {
+void FMessageManager::Advance() const {
     if (!messaging) {
         return;
     }
-    if (!hasAdvanced) {
-        messaging->Advance();
-        hasAdvanced = true;
-    }
-    else {
-        messaging->Close();
-    }
-    
+    messaging->Advance();
 }
 
 bool FMessageManager::IsDone() const {

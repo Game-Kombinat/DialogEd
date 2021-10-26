@@ -11,8 +11,8 @@
  */
 class DIALOGED_API FMessageManager {
 protected:
+    FName advanceActionName;
     
-    bool hasAdvanced;
 public:
     UMessagingWidget* messaging;
     FMessageManager();
@@ -21,9 +21,17 @@ public:
     void SetMessagingWidget(UMessagingWidget* widget) {
         messaging = widget;
     }
+
+    void SetActionName(FName name) {
+        advanceActionName = name;
+    }
+
+    FName GetActionName() const {
+        return advanceActionName;
+    }
     
     /** Dispatches a dialogue piece to the dialogue renderer. */
-    void Begin(FRuntimeDialogueData data);
+    void Begin(FRuntimeDialogueData data) const;
     
     /** Attaches the given message to the already existing text on screen. */
     void Attach(FString message);
@@ -36,7 +44,7 @@ public:
      * this will make the rest of the text appear and move into "waiting" state.
      * Invoking this again, will end the message and IsDone must return true
      */
-    void Advance();
+    void Advance() const;
     
     /** Returns true when the message rendering is done and the whole text is shown. */
     bool IsDone() const;

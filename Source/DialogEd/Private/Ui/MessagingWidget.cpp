@@ -3,6 +3,7 @@
 
 #include "Ui/MessagingWidget.h"
 
+#include "EventManager.h"
 #include "Logging.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 
@@ -68,19 +69,36 @@ void UMessagingWidget::Advance() {
         LOG_WARNING("No active widgets available for advancing.");
         return;
     }
-    // todo: this will only be relevant when we got writing text. right now we don't need to do anything here.
-    // activeWidgets[0]->Advance();
-    
+    if (activeWidgets[0]->IsWriting()) {
+        LOG_INFO("Advancing bubble");
+        activeWidgets[0]->Advance();
+    }
+    else {
+        LOG_INFO("Closing bubble via advance");
+        Close();
+    }
 }
 
 void UMessagingWidget::Close() {
     // take the first widget from activeWidgets list and close it.
     // remove the widget from screen and from activeWidgets list.
     // add to loadedWidgets list.
+    if (activeWidgets.Num() == 0) {
+        LOG_WARNING("No widgets left to close.");
+        return;
+    }
     const auto widget = activeWidgets[0];
     widget->Hide(); // removes itself from viewport at the end
     activeWidgets.Remove(widget);
     loadedWidgets.Add(widget);
+}
+
+void UMessagingWidget::BeginListenToInputAction(FName actionName, FOnInputAction callback) {
+    ListenForInputAction(actionName, EInputEvent::IE_Pressed, true, callback);
+}
+
+void UMessagingWidget::StopListeningToInputAction(FName actionName) {
+    StopListeningForInputAction(actionName, EInputEvent::IE_Pressed);
 }
 
 bool UMessagingWidget::IsDisplayingMessage() const {

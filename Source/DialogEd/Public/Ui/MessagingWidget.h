@@ -41,6 +41,10 @@ public:
     UFUNCTION(BlueprintCallable)
     void Close();
 
+    void BeginListenToInputAction(FName actionName, FOnInputAction callback);
+
+    void StopListeningToInputAction(FName actionName);
+
     /**
      * Returns true for as long as a message is still being rendered.
      * That is: In any state but the closing / closed state.

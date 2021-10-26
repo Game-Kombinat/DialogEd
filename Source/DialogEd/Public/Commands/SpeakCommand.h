@@ -12,6 +12,7 @@
 UCLASS()
 class DIALOGED_API USpeakCommand : public UDialogueCommand {
     GENERATED_BODY()
+    FOnInputAction inputActionDelegate;
 public:
     USpeakCommand();
     virtual ~USpeakCommand() override;
@@ -22,5 +23,9 @@ public:
     virtual void Execute(class UDialogueActor* target, TArray<FString> args) override;
     virtual void Execute(class UDialogueActor* target, FString arg) override;
     virtual bool IsFinished() override;
+    virtual void Cleanup() override;
+
+    UFUNCTION()
+    void OnActionPressed();
 
 };

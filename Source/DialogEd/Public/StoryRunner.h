@@ -23,8 +23,17 @@ class DIALOGED_API UStoryRunner : public UActorComponent {
 
     /** Used so we don't expose widgets in non-ui specific code parts. */
     FMessageManager* messageManager;
+    UPROPERTY()
+    APlayerController* instigatorController;
+    
+    UPROPERTY()
+    ACharacter* instigatorCharacter;
 
 protected:
+    /** Action mapping to poll for when progressing the text or any such thing. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FName inputAction;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     class UDialogueCommandRegister* commandRegister;
 
@@ -42,10 +51,10 @@ public:
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     UFUNCTION(BlueprintCallable)
-    void StartNewStoryThread(UStoryThread* story);
+    void StartNewStoryThread(UStoryThread* story, APlayerController* controller);
 
     UFUNCTION(BlueprintCallable)
-    void StartThreadFromAsset(UStoryAsset* asset, FString threadName);
+    void StartThreadFromAsset(UStoryAsset* asset, FString threadName, APlayerController* controller);
 
     void SetMessageManager(FMessageManager* manager) {
         messageManager = manager;

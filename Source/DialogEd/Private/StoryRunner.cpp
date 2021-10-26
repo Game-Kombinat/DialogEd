@@ -7,6 +7,7 @@
 #include "DialogueCommandRegister.h"
 #include "PreparedCommand.h"
 #include "StoryThread.h"
+#include "GameFramework/Character.h"
 #include "Ui/MessagingWidget.h"
 
 
@@ -24,6 +25,7 @@ void UStoryRunner::BeginPlay() {
     Super::BeginPlay();
     actorRegister->OnBeginPlay(GetWorld());
     commandRegister->OnBeginPlay();
+    SetComponentTickEnabled(false);
 }
 
 
@@ -35,7 +37,8 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     if (!currentThread || (!currentThread->CanContinue() && currentCommand.HasValidSetup() && currentCommand.IsFinished())) {
         SetComponentTickEnabled(false);
         messageManager->messaging->RemoveFromViewport();
-        // todo: return controls to player
+        // give back character controls when thread is over.
+        instigatorCharacter->EnableInput(instigatorController);
         LOG_INFO("Thread ended. Suspending ticking StoryRunner.")
         return;
     }
@@ -49,6 +52,9 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     }
     // if no current command or current command is done:
     if (!currentCommand.HasValidSetup() || currentCommand.IsFinished()) {
+        if (currentCommand.HasValidSetup()) {
+            currentCommand.Cleanup();
+        }
         const auto rawCmd = currentThread->GetNext();
         UDialogueCommand* command = commandRegister->GetCommand(rawCmd.commandName);
         if (!command) {
@@ -65,6 +71,8 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
         // todo: would be better if that happens only once when instantiating the command first time
         command->SetMessageManager(messageManager);
         command->SetWorld(GetWorld());
+
+        command->SetPlayerController(instigatorController);
         
         // need actor register to get actor from names
         // need command register to get command for name
@@ -82,14 +90,19 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     }
 }
 
-void UStoryRunner::StartNewStoryThread(UStoryThread* story) {
+void UStoryRunner::StartNewStoryThread(UStoryThread* story, APlayerController* controller) {
     if (currentThread && currentThread->CanContinue()) {
         LOG_ERROR("Attempted to override already running story thread.");
         return;
     }
+    messageManager->SetActionName(inputAction);
     messageManager->messaging->AddToViewport();
     messageManager->messaging->ForceLayoutPrepass();
-    // todo: remove controls to player
+    // remove controls from instigator char and store pointers for putting back later
+    const auto controlledChar = controller->GetCharacter();
+    controlledChar->DisableInput(controller);
+    instigatorController = controller;
+    instigatorCharacter = controlledChar;
     
     currentThread = story;
     currentThread->ResetStoryThread();
@@ -98,10 +111,10 @@ void UStoryRunner::StartNewStoryThread(UStoryThread* story) {
     SetComponentTickEnabled(true);
 }
 
-void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName) {
+void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName, APlayerController* controller) {
     UStoryThread* thread = asset->GetStoryThread(threadName);
     if (thread) {
-        StartNewStoryThread(thread);
+        StartNewStoryThread(thread, controller);
     }
 }
 
