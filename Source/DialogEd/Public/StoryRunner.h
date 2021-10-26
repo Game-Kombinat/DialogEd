@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PreparedCommand.h"
+#include "StoryAsset.h"
 #include "StoryThread.h"
 #include "Components/ActorComponent.h"
 #include "StoryRunner.generated.h"
@@ -14,10 +15,14 @@
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DIALOGED_API UStoryRunner : public UActorComponent {
     GENERATED_BODY()
-    
-    FStoryThread* currentThread;
+
+    UPROPERTY(Transient)
+    UStoryThread* currentThread;
     
     FPreparedCommand currentCommand;
+
+    /** Used so we don't expose widgets in non-ui specific code parts. */
+    FMessageManager* messageManager;
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -36,7 +41,15 @@ protected:
 public:
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-    void StartNewStoryThread(FStoryThread* story);
+    UFUNCTION(BlueprintCallable)
+    void StartNewStoryThread(UStoryThread* story);
+
+    UFUNCTION(BlueprintCallable)
+    void StartThreadFromAsset(UStoryAsset* asset, FString threadName);
+
+    void SetMessageManager(FMessageManager* manager) {
+        messageManager = manager;
+    }
 
 
 };

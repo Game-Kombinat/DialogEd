@@ -14,13 +14,13 @@ class DIALOGED_API UDialogueCommandRegister : public UDataAsset {
     GENERATED_BODY()
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    TArray<FCommandRelation> commandMap;
+    UDataTable* commandMap;
 
     // each command has a single instance that is kept here during runtime.
     UPROPERTY(Transient)
     TMap<FString, UDialogueCommand*> instantiatedCommands;
 
-    UClass* FindClassForName(const FString& name);
+    UClass* FindClassForName(const FString& name) const;
     
 public:
     /** Get command for name. May return nullptr on unmapped commands! */

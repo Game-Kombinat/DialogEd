@@ -5,11 +5,11 @@
 
 #include "Logging.h"
 
-UClass* UDialogueCommandRegister::FindClassForName(const FString& name) {
-    for (auto e : commandMap) {
-        if (e.commandName == name) {
-            return e.commandClass;
-        }
+UClass* UDialogueCommandRegister::FindClassForName(const FString& name) const {
+    const FString contextString;
+    const auto row = commandMap->FindRow<FCommandRelation>(FName(name), *contextString);
+    if (row) {
+        return row->commandClass;
     }
     return nullptr;
 }

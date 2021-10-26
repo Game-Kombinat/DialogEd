@@ -16,13 +16,10 @@ UStoryAssetFactory::UStoryAssetFactory() {
 
 UObject* UStoryAssetFactory::FactoryCreateFile(UClass* inClass, UObject* inParent, FName inName, EObjectFlags flags, const FString& filename, const TCHAR* parms, FFeedbackContext* warn, bool& outOperationCanceled) {
     FileParser p(filename);
-    auto threads = p.Parse();
-
     auto story = NewObject<UStoryAsset>(inParent, inClass, inName, flags);
-    story->SetThreads(threads);
     story->assetImportData->Update(filename);
+    p.ParseInto(story);
     outOperationCanceled = false;
-
     return story;
 
 }

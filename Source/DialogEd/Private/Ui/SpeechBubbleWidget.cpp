@@ -4,6 +4,7 @@
 #include "Ui/SpeechBubbleWidget.h"
 
 #include "Anim8Action.h"
+#include "GameMapsSettings.h"
 #include "Logging.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/RichTextBlock.h"
@@ -12,30 +13,41 @@
 
 void USpeechBubbleWidget::MakeVisible() {
     currentState = EBubbleState::Opening;
-    FInterpolator::Anim8(GetWorld(), .15, true,
-        [&](const float t) {
-            verticalBox->SetRenderOpacity(t);
-            verticalBox->SetRenderScale(FMath::Lerp(FVector2D::ZeroVector, FVector2D::UnitVector, t));
-        }, [&]() {
-            // it makes no sense atm, it should be "Open" but we _will_ have a typewriter effect
-            // at some point and then this is where the writing effect will begin.
-            currentState = EBubbleState::Writing;
-        }
-    );
+    // we have to use explicit delegates here because
+    // of the lambdas capture reach not playing along when passing it down directly.
+    FAnim8Sample sample;
+    sample.BindLambda([&](const float t) {
+        verticalBox->SetRenderOpacity(t);
+        verticalBox->SetRenderScale(FMath::Lerp(FVector2D::ZeroVector, FVector2D::UnitVector, t));
+    });
+
+    FAnim8Done done;
+    done.BindLambda([&]() {
+        currentState = EBubbleState::Writing;
+    });
+    FInterpolator::Anim8(GetWorld(), .15, true, sample, done);
 }
 
 void USpeechBubbleWidget::MakeInvisible() {
     currentState = EBubbleState::Closing;
-    FInterpolator::Anim8(GetWorld(), .15, true,
-        [this](const float t) {
-            verticalBox->SetRenderOpacity(t);
-            verticalBox->SetRenderScale(FMath::Lerp(FVector2D::UnitVector, FVector2D::ZeroVector, t));
+    // we have to use explicit delegates here because
+    // of the lambdas capture reach not playing along when passing it down directly.
+    FAnim8Sample sample;
+    sample.BindLambda([&](const float t) {
+        verticalBox->SetRenderOpacity(t);
+        verticalBox->SetRenderScale(FMath::Lerp(FVector2D::UnitVector, FVector2D::ZeroVector, t));
 
-        },
-        [this]() {
-            currentState = EBubbleState::Closed;
-            RemoveFromViewport();
-        }
+    });
+
+    FAnim8Done done;
+    done.BindLambda([&]() {
+        currentState = EBubbleState::Closed;
+        RemoveFromViewport();
+    });
+
+    FInterpolator::Anim8(GetWorld(), .15, true,
+        sample,
+        done
     );
 }
 

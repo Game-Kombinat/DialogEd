@@ -13,8 +13,8 @@
  *
  * This is part of raw parsed data from the input text. It is part of a story which is a piece of DataAsset.
  */
-USTRUCT(BlueprintType)
-struct DIALOGED_API FStoryThread {
+UCLASS(BlueprintType)
+class DIALOGED_API UStoryThread : public UObject {
     GENERATED_BODY()
 protected:
     
@@ -27,10 +27,12 @@ protected:
     // index at which we're currently at in the stack
     UPROPERTY(VisibleAnywhere)
     int threadPointer;
+
+    bool isPrimed;
     
 public:
-    FStoryThread();
-    explicit FStoryThread(FString displayName);
+    UStoryThread();
+    explicit UStoryThread(FString displayName);
 
     void AddCommand(FParsedCommand command);
 
@@ -38,7 +40,16 @@ public:
 
     FParsedCommand GetNext();
     
-    void ResetThread();
+    void ResetStoryThread();
+    FString GetStoryThreadName() const;
+
+    void SetThreadName(const FString& newThreadName) {
+        threadName = newThreadName;
+    }
+
+    bool IsPrimed() const;
+
+    void Prime();
 
 
 };

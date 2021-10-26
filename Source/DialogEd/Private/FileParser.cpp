@@ -24,12 +24,11 @@ FileParser::~FileParser() {
 
 
 
-TArray<FStoryThread> FileParser::Parse() {
+void FileParser::ParseInto(UStoryAsset* storyAsset) {
     // given that each line is one command, lets go
-    TArray<FStoryThread> threads;
     // I guess this can be done better with a stack but I cba right now.
     bool hasThread = false;
-    FStoryThread currentThread;
+    UStoryThread* currentThread = nullptr;
     for (FString line : fileLines) {
         // first check if line is a comment
         if (IsComment(line)) {
@@ -43,7 +42,7 @@ TArray<FStoryThread> FileParser::Parse() {
                 continue;
             }
             hasThread = true;
-            currentThread = ParseThreadHeader(line);
+            currentThread = ParseThreadHeader(line, storyAsset);
             continue;
         }
 
@@ -51,22 +50,22 @@ TArray<FStoryThread> FileParser::Parse() {
             if (!hasThread) {
                 LOG_ERROR("Parsing error: Closing thread found but no thread is open. Line: %s", *line);
             }
-            threads.Add(currentThread);
             hasThread = false;
             continue;
         }
-        
+        if (!currentThread) {
+            LOG_ERROR("Logic error: Attempting to read new command but we have no reference to a story thread. Line: %s", *line);
+            continue;
+        }
         // then check if this is an explicit command
         if (IsCommand(line)) {
-            currentThread.AddCommand(ParseWithCommand(line));
+            currentThread->AddCommand(ParseWithCommand(line));
         }
         // for now, this is all we support
         else {
-            currentThread.AddCommand(ParseWithSpeakCommand(line));
+            currentThread->AddCommand(ParseWithSpeakCommand(line));
         }
     }
-
-    return threads;
 }
 
 bool FileParser::IsComment(const FString& line) {
@@ -113,14 +112,17 @@ FParsedCommand FileParser::ParseWithSpeakCommand(const FString& line) {
     return FParsedCommand();
 }
 
-FStoryThread FileParser::ParseThreadHeader(const FString& line) {
+UStoryThread* FileParser::ParseThreadHeader(const FString& line, UStoryAsset* storyAsset) {
     // >>>> Thread Name
     const FRegexPattern commandPattern(TEXT(">>>>\\s*(.*)"));
     FRegexMatcher commandMatcher(commandPattern, *line);
     if (commandMatcher.FindNext()) {
         const FString threadName = commandMatcher.GetCaptureGroup(1);
-        return FStoryThread(threadName);
+        const auto t = NewObject<UStoryThread>(storyAsset, UStoryThread::StaticClass(), FName(threadName));
+        t->SetThreadName(threadName);
+        storyAsset->AddStoryThread(t);
+        return t;
     }
     LOG_ERROR("Failed to parse story thread header %s", *line);
-    return FStoryThread();
+    return nullptr;
 }

@@ -34,6 +34,7 @@ void USpeakCommand::Execute(UDialogueActor* target, FString arg) {
 
 bool USpeakCommand::IsFinished() {
     if (!messageManager) {
+        LOG_WARNING("No message manager is SpeakCommand::IsFinished!");
         return true;
     }
     return messageManager->IsDone();

@@ -11,10 +11,10 @@
 USTRUCT(BlueprintType)
 struct FCommandRelation : public FTableRowBase {
     GENERATED_BODY()
-    
-    // could be FName but this saves some juggling later down the line.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FString commandName; 
+    // command name is rows ID
+    // // could be FName but this saves some juggling later down the line.
+    // UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    // FString commandName; 
 
     // maps the name to an instantiatable class that implements IDialogueCommand
     UPROPERTY(EditAnywhere, BlueprintReadOnly)

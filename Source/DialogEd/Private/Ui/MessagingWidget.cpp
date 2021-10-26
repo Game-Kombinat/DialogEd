@@ -50,7 +50,7 @@ void UMessagingWidget::BeginMessage(FRuntimeDialogueData messageData) {
         return;
     }
     const auto widget = loadedWidgets[0];
-    const FVector2D canvasSize = geometry.GetLocalSize();
+    const FVector2D canvasSize = GetCachedGeometry().GetLocalSize();
     LOG_INFO("Canvas Size x: %f, y: %f", canvasSize.X, canvasSize.Y);
     LOG_INFO("Setting max bubble size to x: %f, y: %f", canvasSize.X / 2.25f, canvasSize.Y / 2.25f);
     
@@ -84,5 +84,19 @@ void UMessagingWidget::Close() {
 }
 
 bool UMessagingWidget::IsDisplayingMessage() const {
-    return activeWidgets.Num() > 0; // trollolol
+    for (auto widget : activeWidgets) {
+        if (widget->IsInViewport()) {
+            return true;
+        }
+    }
+
+    // There is a short period (animation) where widgets are not in active list
+    // but are still on the viewport.
+    for (auto widget : loadedWidgets) {
+        if (widget->IsInViewport()) {
+            return true;
+        }
+    }
+    LOG_INFO("No widgets in viewport, calling this done.")
+    return false;
 }

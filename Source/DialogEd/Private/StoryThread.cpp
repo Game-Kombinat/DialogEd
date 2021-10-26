@@ -3,28 +3,41 @@
 
 #include "StoryThread.h"
 
-FStoryThread::FStoryThread() {
+UStoryThread::UStoryThread() {
     threadName = "Unnamed Thread";
     threadPointer = 0;
 }
 
-FStoryThread::FStoryThread(FString displayName) {
+UStoryThread::UStoryThread(FString displayName) {
     threadName = displayName;
     threadPointer = 0;
 }
 
-void FStoryThread::AddCommand(const FParsedCommand command) {
+void UStoryThread::AddCommand(const FParsedCommand command) {
     commandStack.Add(command);
 }
 
-bool FStoryThread::CanContinue() const {
+bool UStoryThread::CanContinue() const {
     return threadPointer < commandStack.Num();
 }
 
-FParsedCommand FStoryThread::GetNext() {
+FParsedCommand UStoryThread::GetNext() {
     return commandStack[threadPointer++];
 }
 
-void FStoryThread::ResetThread() {
+void UStoryThread::ResetStoryThread() {
     threadPointer = 0;
+    isPrimed = false;
+}
+
+FString UStoryThread::GetStoryThreadName() const {
+    return threadName;
+}
+
+bool UStoryThread::IsPrimed() const {
+    return isPrimed;
+}
+
+void UStoryThread::Prime() {
+    isPrimed = true;
 }

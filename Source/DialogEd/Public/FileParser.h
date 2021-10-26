@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "StoryAsset.h"
 
 struct FParsedCommand;
 /**
@@ -10,13 +11,12 @@ struct FParsedCommand;
  */
 class DIALOGED_API FileParser {
     TArray<FString> fileLines;
-    class UDataTable* targetDataTable;
 public:
     FileParser(FString fileName);
     ~FileParser();
 
     
-    TArray<struct FStoryThread> Parse();
+    void ParseInto(UStoryAsset* storyAsset);
 
 private:
     static bool IsComment(const FString& line);
@@ -25,5 +25,5 @@ private:
     static bool IsEndThread(const FString& line);
     static FParsedCommand ParseWithCommand(const FString& line);
     static FParsedCommand ParseWithSpeakCommand(const FString& line);
-    static FStoryThread ParseThreadHeader(const FString& line);
+    static UStoryThread* ParseThreadHeader(const FString& line, UStoryAsset* storyAsset);
 };

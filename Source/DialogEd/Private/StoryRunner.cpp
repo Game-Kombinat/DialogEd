@@ -7,6 +7,7 @@
 #include "DialogueCommandRegister.h"
 #include "PreparedCommand.h"
 #include "StoryThread.h"
+#include "Ui/MessagingWidget.h"
 
 
 // Sets default values for this component's properties
@@ -21,18 +22,29 @@ UStoryRunner::UStoryRunner() {
 // Called when the game starts
 void UStoryRunner::BeginPlay() {
     Super::BeginPlay();
-
-    // ...
-    
+    actorRegister->OnBeginPlay(GetWorld());
+    commandRegister->OnBeginPlay();
 }
 
 
 // Called every frame
 void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    
-    if (!currentThread || !currentThread->CanContinue()) {
+
+    // if we have no thread or the current thread ended and the last command is finished
+    if (!currentThread || (!currentThread->CanContinue() && currentCommand.HasValidSetup() && currentCommand.IsFinished())) {
         SetComponentTickEnabled(false);
+        messageManager->messaging->RemoveFromViewport();
+        // todo: return controls to player
+        LOG_INFO("Thread ended. Suspending ticking StoryRunner.")
+        return;
+    }
+
+    // This is actually just to give the fucking slate rendering time for a tick
+    // to draw the god damn messaging system so it has a size.
+    // There ought to be a better solution but I can find none.
+    if (!currentCommand.HasValidSetup() && currentThread && !currentThread->IsPrimed()) {
+        currentThread->Prime();
         return;
     }
     // if no current command or current command is done:
@@ -50,6 +62,9 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
             SetComponentTickEnabled(false);
             return;
         }
+        // todo: would be better if that happens only once when instantiating the command first time
+        command->SetMessageManager(messageManager);
+        command->SetWorld(GetWorld());
         
         // need actor register to get actor from names
         // need command register to get command for name
@@ -57,6 +72,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
         currentCommand = FPreparedCommand(command, rawCmd.argumentList, diagActor);
         // and execute it.
         if (currentCommand.Verify()) {
+            LOG_INFO("Running new command!");
             currentCommand.Run();
         }
         else {
@@ -66,15 +82,26 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     }
 }
 
-void UStoryRunner::StartNewStoryThread(FStoryThread* story) {
+void UStoryRunner::StartNewStoryThread(UStoryThread* story) {
     if (currentThread && currentThread->CanContinue()) {
         LOG_ERROR("Attempted to override already running story thread.");
         return;
     }
+    messageManager->messaging->AddToViewport();
+    messageManager->messaging->ForceLayoutPrepass();
+    // todo: remove controls to player
+    
     currentThread = story;
-    currentThread->ResetThread();
+    currentThread->ResetStoryThread();
     // we could reset the currentCommand here but in case it's actually still running
     // it's better to leave it until it's finished.
     SetComponentTickEnabled(true);
+}
+
+void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName) {
+    UStoryThread* thread = asset->GetStoryThread(threadName);
+    if (thread) {
+        StartNewStoryThread(thread);
+    }
 }
 

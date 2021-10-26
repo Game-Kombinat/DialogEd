@@ -6,9 +6,6 @@
 #include "EditorFramework/AssetImportData.h"
 #endif
 
-FStoryThread* UStoryAsset::GetThread(FString threadName) {
-    return nullptr;
-}
 #if WITH_EDITOR
 void UStoryAsset::PostInitProperties() {
     UObject::PostInitProperties();
@@ -19,6 +16,15 @@ void UStoryAsset::PostInitProperties() {
 }
 #endif
 
-void UStoryAsset::SetThreads(const TArray<FStoryThread> newThreads) {
-    threads = newThreads;
+void UStoryAsset::AddStoryThread(UStoryThread* storyThread) {
+    threads.Add(storyThread);
+}
+
+UStoryThread* UStoryAsset::GetStoryThread(const FString& storyThreadName) {
+    for (auto t : threads) {
+        if (t->GetStoryThreadName() == storyThreadName) {
+            return t;
+        }
+    }
+    return nullptr;
 }
