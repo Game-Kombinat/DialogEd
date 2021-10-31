@@ -22,16 +22,17 @@ FileParser::FileParser(FString fileName) {
 FileParser::~FileParser() {
 }
 
-
-
-void FileParser::ParseInto(UStoryAsset* storyAsset) {
+void FileParser::ParseInto(UStoryAsset* storyAsset, TArray<FString>& lines) {
+    FParsedCommand::ResetParsingIndex();
     // given that each line is one command, lets go
     // I guess this can be done better with a stack but I cba right now.
     bool hasThread = false;
     UStoryThread* currentThread = nullptr;
-    for (FString line : fileLines) {
-        // first check if line is a comment
-        if (IsComment(line)) {
+    for (int i = 0; i < lines.Num(); ++i) {
+        FString line = lines[i];
+        // first check if line is a comment or empty
+        // todo: implement multi line comments
+        if (IsComment(line) || line.TrimStartAndEnd().IsEmpty()) {
             continue;
         }
 
@@ -61,11 +62,18 @@ void FileParser::ParseInto(UStoryAsset* storyAsset) {
         if (IsCommand(line)) {
             currentThread->AddCommand(ParseWithCommand(line));
         }
+        else if (BeginsChoiceSegment(line)) {
+            i = ParseChoiceCommand(storyAsset, currentThread, lines, i);
+        }
         // for now, this is all we support
         else {
             currentThread->AddCommand(ParseWithSpeakCommand(line));
         }
     }
+}
+
+void FileParser::ParseInto(UStoryAsset* storyAsset) {
+    ParseInto(storyAsset, fileLines);
 }
 
 bool FileParser::IsComment(const FString& line) {
@@ -82,6 +90,18 @@ bool FileParser::IsBeginThread(const FString& line) {
 
 bool FileParser::IsEndThread(const FString& line) {
     return line.TrimStart().StartsWith("<<<<");
+}
+
+bool FileParser::BeginsChoiceSegment(const FString& line) {
+    return line.TrimStart().StartsWith("****");
+}
+
+bool FileParser::EndsChoiceSegment(const FString& line) {
+    return line.TrimStart().Equals("****");
+}
+
+bool FileParser::BeginsBranch(const FString& line) {
+    return line.TrimStart().StartsWith("--");
 }
 
 FParsedCommand FileParser::ParseWithCommand(const FString& line) {
@@ -126,3 +146,79 @@ UStoryThread* FileParser::ParseThreadHeader(const FString& line, UStoryAsset* st
     LOG_ERROR("Failed to parse story thread header %s", *line);
     return nullptr;
 }
+
+UStoryThread* FileParser::ParseChoiceHeader(const FString& line, UStoryAsset* storyAsset, FParsedCommand& cmd) {
+    // -- Option Title
+    const FRegexPattern commandPattern(TEXT("--\\s*(.*)"));
+    FRegexMatcher commandMatcher(commandPattern, *line);
+    if (commandMatcher.FindNext()) {
+        const FString threadName = commandMatcher.GetCaptureGroup(1);
+        const auto t = NewObject<UStoryThread>(storyAsset, UStoryThread::StaticClass(), FName(threadName));
+        t->SetThreadName(threadName);
+        int idx = cmd.AddBranch(threadName);
+        storyAsset->AddSubThread(cmd.GetBranchId(idx), t);
+        return t;
+    }
+    LOG_ERROR("Failed to parse choice header %s", *line);
+    return nullptr;
+}
+
+int FileParser::ParseChoiceCommand(UStoryAsset* storyAsset, UStoryThread* outerThread, TArray<FString>& lines, int lineNum) {
+    FString headerLine = lines[lineNum];
+    // **** actor: question
+    const FRegexPattern commandPattern(TEXT("\\*\\*\\*\\*\\s*(.*):\\s*(.+)"));
+    FRegexMatcher commandMatcher(commandPattern, *headerLine);
+    if (commandMatcher.FindNext()) {
+        const FString speaker = commandMatcher.GetCaptureGroup(1);
+        // parsed commands can now have branches.
+        // threads have a map containing subthreads, keyed by an id (commandName_branchName).
+        // This way a unique address is known and accessible for each possible branch.
+        const FString message = commandMatcher.GetCaptureGroup(2);
+        FParsedCommand cmd = FParsedCommand("choice", speaker, message);
+        return ParseChoiceSubThreads(storyAsset, outerThread, lines, lineNum+1, cmd);
+    }
+    return lineNum;
+}
+
+int FileParser::ParseChoiceSubThreads(UStoryAsset* story, UStoryThread* outerThread, TArray<FString>& lines, int lineNum, FParsedCommand& branchingCommand) {
+    UStoryThread* currentThread = nullptr;
+    for (int i = lineNum; i < lines.Num(); ++i) {
+        // this will have to break when a line starting with **** is found
+        FString line = lines[i];
+        
+        if (EndsChoiceSegment(line)) {
+            outerThread->AddCommand(branchingCommand);
+            return i;
+        }
+        // note there is no explicit "end branch". We auto end the branch when a new one is created.
+        if (BeginsBranch(line)) {
+            currentThread = ParseChoiceHeader(line, story, branchingCommand);
+            continue;
+        }
+
+        if (!currentThread) {
+            LOG_ERROR("No branch thread is open. Got nothing to put the line %s", *line);
+            continue;
+        }
+
+        // then check if this is an explicit command
+        if (IsCommand(line)) {
+            currentThread->AddCommand(ParseWithCommand(line));
+        }
+
+        // nested choices, ho boi! todo: test if nested choices _actually_ work lol
+        else if (BeginsChoiceSegment(line)) {
+            i = ParseChoiceCommand(story, currentThread, lines, i);
+        }
+        // for now, this is all we support
+        else {
+            currentThread->AddCommand(ParseWithSpeakCommand(line));
+        }
+    }
+    LOG_ERROR("There is an unterminated choice segment starting on line %i", lineNum);
+    // this whole thing is trash, this will cause the whole operation to end
+    return lines.Num();
+}
+
+
+

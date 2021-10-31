@@ -6,11 +6,15 @@
 UStoryThread::UStoryThread() {
     threadName = "Unnamed Thread";
     threadPointer = 0;
+    isPrimed = false;
+    currentCommand = FPreparedCommand();
 }
 
 UStoryThread::UStoryThread(FString displayName) {
     threadName = displayName;
     threadPointer = 0;
+    isPrimed = false;
+    currentCommand = FPreparedCommand();
 }
 
 void UStoryThread::AddCommand(const FParsedCommand command) {
@@ -19,6 +23,10 @@ void UStoryThread::AddCommand(const FParsedCommand command) {
 
 bool UStoryThread::CanContinue() const {
     return threadPointer < commandStack.Num();
+}
+
+bool UStoryThread::IsRunning() const {
+    return currentCommand.HasValidSetup() && !currentCommand.IsFinished();
 }
 
 FParsedCommand UStoryThread::GetNext() {
@@ -40,4 +48,18 @@ bool UStoryThread::IsPrimed() const {
 
 void UStoryThread::Prime() {
     isPrimed = true;
+}
+
+bool UStoryThread::RunCommand(FPreparedCommand command) {
+    if (command.Verify()) {
+        currentCommand = command;
+        currentCommand.Run();
+        return true;
+    }
+    return false;
+    
+}
+
+void UStoryThread::CleanupCommand() const {
+    currentCommand.Cleanup();
 }

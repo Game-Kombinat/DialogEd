@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ParsedCommand.h"
+#include "PreparedCommand.h"
 #include "StoryThread.generated.h"
 
 /**
@@ -28,6 +29,8 @@ protected:
     UPROPERTY(VisibleAnywhere)
     int threadPointer;
 
+    FPreparedCommand currentCommand;
+
     bool isPrimed;
     
 public:
@@ -37,6 +40,8 @@ public:
     void AddCommand(FParsedCommand command);
 
     bool CanContinue() const;
+
+    bool IsRunning() const;
 
     FParsedCommand GetNext();
     
@@ -51,5 +56,9 @@ public:
 
     void Prime();
 
+    /** Runs new command */
+    bool RunCommand(FPreparedCommand command);
 
+    /** Cleans up current command */
+    void CleanupCommand() const;
 };

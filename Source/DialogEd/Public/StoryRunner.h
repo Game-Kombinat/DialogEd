@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PreparedCommand.h"
 #include "StoryAsset.h"
 #include "StoryThread.h"
 #include "Components/ActorComponent.h"
@@ -19,10 +18,8 @@ class DIALOGED_API UStoryRunner : public UActorComponent {
     UPROPERTY(Transient)
     UStoryThread* currentThread;
     
-    FPreparedCommand currentCommand;
-
     /** Used so we don't expose widgets in non-ui specific code parts. */
-    FMessageManager* messageManager;
+    class FMessageManager* messageManager;
     UPROPERTY()
     APlayerController* instigatorController;
     

@@ -1,8 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Logging.h"
-#include "Kismet/KismetStringLibrary.h"
+#include "DialogueBranchId.h"
 #include "ParsedCommand.generated.h"
 
 /**
@@ -12,7 +11,9 @@
 USTRUCT(BlueprintType)
 struct FParsedCommand {
     GENERATED_BODY()
-    
+
+    static int parsingIndex;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString commandName;
 
@@ -24,12 +25,56 @@ struct FParsedCommand {
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString argumentList;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FDialogueBranchId> branches;
+
+    /** This ID is required to create actually unique branch IDs */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    int parsingId;
+
     FParsedCommand() {
         // just to signify that this is wrong.
         commandName = "unknown";
         targetActor = "none";
+        parsingId = -1;
     }
 
     FParsedCommand(const FString name, const FString actorName, const FString args) : commandName(name), targetActor(actorName), argumentList(args) {
+        parsingId = parsingIndex++;
+    }
+
+    int AddBranch(const FString branchTitle) {
+
+        return branches.Add(FDialogueBranchId(
+                branchTitle,
+                FString::Format(TEXT("{0}_{1}_{2}"), {
+                        parsingId,
+                        commandName,
+                        branchTitle
+                    }
+                )
+            )
+        );
+    }
+
+    /** Returns the branch display title (aka the question) */
+    FString GetBranchTitle(const int idx) const {
+        return branches[idx].title;
+    }
+
+    /** Returns the branch id (address to a sub thread within the thread) */
+    FString GetBranchId(const int idx) const {
+        return branches[idx].branchId;
+    }
+
+    int NumBranches() const {
+        return branches.Num();
+    }
+
+    /** Call before parsing a new story file */
+    static void ResetParsingIndex() {
+        parsingIndex = 0;
     }
 };
+
+int FParsedCommand::parsingIndex = 0;

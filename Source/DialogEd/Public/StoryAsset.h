@@ -16,6 +16,10 @@ class DIALOGED_API UStoryAsset : public UObject {
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TArray<UStoryThread*> threads;
+    
+    /** Used to facilitate branching. Sub Threads can be single commands or a list of commands. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TMap<FString, UStoryThread*> subThreads;
 
 public:
 #if WITH_EDITOR
@@ -26,4 +30,7 @@ public:
     
     void AddStoryThread(UStoryThread* storyThread);
     UStoryThread* GetStoryThread(const FString& storyThreadName);
+    void AddSubThread(const FString& string, UStoryThread* storyThread);
+
+    UStoryThread* GetSubThread(const FString address);
 };

@@ -28,3 +28,14 @@ UStoryThread* UStoryAsset::GetStoryThread(const FString& storyThreadName) {
     }
     return nullptr;
 }
+
+void UStoryAsset::AddSubThread(const FString& string, UStoryThread* storyThread) {
+    subThreads.Add(string, storyThread);
+}
+
+UStoryThread* UStoryAsset::GetSubThread(const FString address) {
+    if (!subThreads.Contains(address)) {
+        return nullptr;
+    }
+    return subThreads[address];
+}

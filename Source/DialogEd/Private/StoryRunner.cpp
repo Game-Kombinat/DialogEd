@@ -5,6 +5,7 @@
 
 #include "ActorRegister.h"
 #include "DialogueCommandRegister.h"
+#include "Logging.h"
 #include "PreparedCommand.h"
 #include "StoryThread.h"
 #include "GameFramework/Character.h"
@@ -34,7 +35,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
     // if we have no thread or the current thread ended and the last command is finished
-    if (!currentThread || (!currentThread->CanContinue() && currentCommand.HasValidSetup() && currentCommand.IsFinished())) {
+    if (!currentThread || (!currentThread->CanContinue() && !currentThread->IsRunning())) {
         SetComponentTickEnabled(false);
         messageManager->messaging->RemoveFromViewport();
         // give back character controls when thread is over.
@@ -46,15 +47,13 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     // This is actually just to give the fucking slate rendering time for a tick
     // to draw the god damn messaging system so it has a size.
     // There ought to be a better solution but I can find none.
-    if (!currentCommand.HasValidSetup() && currentThread && !currentThread->IsPrimed()) {
+    if (currentThread && !currentThread->IsPrimed()) {
         currentThread->Prime();
         return;
     }
     // if no current command or current command is done:
-    if (!currentCommand.HasValidSetup() || currentCommand.IsFinished()) {
-        if (currentCommand.HasValidSetup()) {
-            currentCommand.Cleanup();
-        }
+    if (!currentThread->IsRunning()) {
+        currentThread->CleanupCommand();
         const auto rawCmd = currentThread->GetNext();
         UDialogueCommand* command = commandRegister->GetCommand(rawCmd.commandName);
         if (!command) {
@@ -73,15 +72,12 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
         command->SetWorld(GetWorld());
 
         command->SetPlayerController(instigatorController);
+        command->SetStoryThread(currentThread);
         
-        // need actor register to get actor from names
-        // need command register to get command for name
-        // Then we can create a new prepared command: 
-        currentCommand = FPreparedCommand(command, rawCmd.argumentList, diagActor);
+        FPreparedCommand currentCommand = FPreparedCommand(command, rawCmd.argumentList, diagActor);
         // and execute it.
-        if (currentCommand.Verify()) {
+        if (currentThread->RunCommand(currentCommand)) {
             LOG_INFO("Running new command!");
-            currentCommand.Run();
         }
         else {
             // todo: be nice if we get some diagnostics here as to what exactly went sideways with Verify.
