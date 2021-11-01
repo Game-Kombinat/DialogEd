@@ -195,7 +195,8 @@ void USpeechBubbleWidget::PrepareForDisplay(FRuntimeDialogueData dataToShow, FVe
     AddToViewport(drawOrder);
     currentDialogueData = dataToShow;
     message->TakeWidget(); // ensures underlying slate widget exists ...
-    message->SetText(FText::FromString(dataToShow.message));
+    
+    message->SetText(FText::FromString(FString::Format(TEXT("{0}:\n{1}"), {dataToShow.speaker->GetActorName(), dataToShow.message})));
     if (dataToShow.branchData.Num() > 0) {
         PrepareChoices(dataToShow.branchData);
     }
