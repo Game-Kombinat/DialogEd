@@ -22,6 +22,7 @@ class DIALOGED_API UStoryRunner : public UActorComponent {
     TArray<UStoryThread*> threadStack;
     
     /** Used so we don't expose widgets in non-ui specific code parts. */
+    UPROPERTY()
     class UMessageManager* messageManager;
     UPROPERTY()
     APlayerController* instigatorController;
@@ -62,6 +63,4 @@ public:
     void SetMessageManager(UMessageManager* manager) {
         messageManager = manager;
     }
-
-
 };
