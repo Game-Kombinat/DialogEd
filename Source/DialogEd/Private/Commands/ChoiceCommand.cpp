@@ -3,34 +3,43 @@
 
 #include "Commands/ChoiceCommand.h"
 
+#include "Logging.h"
+
 UChoiceCommand::UChoiceCommand() {
     choiceReceived = false;
     playerChoice = -1;
 }
 
 void UChoiceCommand::Execute(UDialogueActor* target, TArray<FString> strings) {
-    Super::Execute(target, strings);
+    LOG_WARNING("Called Choice command with argument array. Using first element!");
+    
+    Execute(target, strings[0]);
 }
 
 void UChoiceCommand::Execute(UDialogueActor* target, FString arg) {
-    Super::Execute(target, arg);
+    choiceReceived = false;
+    playerChoice = -1;
+    
+    FRuntimeDialogueData d = FRuntimeDialogueData(target, arg);
+    d.SetBranches(branches);
+    choiceCallback.Unbind();
+    choiceCallback.BindDynamic(this, &UChoiceCommand::ReceiveChoice);
+    //choiceCallback.BindUObject();
+    messageManager->Begin(d, choiceCallback);
 }
 
 bool UChoiceCommand::IsFinished() {
     // return true when a choice from the player was received.
-    return choiceReceived;
+    return messageManager->IsDone();
 }
 
 void UChoiceCommand::Cleanup() {
-    choiceReceived = false;
-    playerChoice = -1;
+    
 }
 
-void UChoiceCommand::ReceiveChoice(const int choice) {
+void UChoiceCommand::ReceiveChoice(int choice) {
     choiceReceived = true;
     playerChoice = choice;
-    // find a way to identify this branch
-    // so when setting the choice to story thread,
-    // we actually know where to set the thread pointer to or which subthread to run next.
-    // myThread->
+    myThread->SetBranchingTarget(choice);
+    messageManager->Close();
 }

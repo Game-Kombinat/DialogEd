@@ -15,16 +15,18 @@ class DIALOGED_API UChoiceCommand : public UDialogueCommand {
     GENERATED_BODY()
     bool choiceReceived;
     int playerChoice;
+    FChoiceCallback choiceCallback;
 public:
     UChoiceCommand();
-    virtual int MinArguments() override { return 1; } //  at least one word (we expect actor argument is removed at this point)
-    virtual int MaxArguments() override { return 4; } // each arg is a choice
+    // arguments here denote the text spoken to formulate a question.
+    // the choices are not part of the argument list (see SetBranches etc)
+    virtual int MinArguments() override { return 1; }
+    virtual int MaxArguments() override { return -1; }
     
     virtual void Execute(class UDialogueActor* target, TArray<FString> args) override;
     virtual void Execute(class UDialogueActor* target, FString arg) override;
     virtual bool IsFinished() override;
     virtual void Cleanup() override;
-
+    UFUNCTION()
     void ReceiveChoice(int choice);
-
 };

@@ -18,6 +18,12 @@ void FMessageManager::Begin(FRuntimeDialogueData data) const {
     }
 }
 
+void FMessageManager::Begin(FRuntimeDialogueData data, FChoiceCallback receiveChoice) const {
+    if (messaging) {
+        messaging->BeginChoice(data, receiveChoice);
+    }
+}
+
 void FMessageManager::Attach(FString message) {
     // not implemented just yet.
 }
@@ -35,4 +41,11 @@ bool FMessageManager::IsDone() const {
         return true;
     }
     return !messaging->IsDisplayingMessage();
+}
+
+void FMessageManager::Close() const {
+    if (messaging) {
+        messaging->Close();
+    }
+    
 }

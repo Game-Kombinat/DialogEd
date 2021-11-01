@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MessageManager.h"
 #include "SpeechBubbleWidget.h"
 #include "UObject/Object.h"
 #include "MessagingWidget.generated.h"
@@ -34,8 +35,10 @@ public:
     virtual void NativeConstruct() override;
     virtual void NativeDestruct() override;
 
-    UFUNCTION(BlueprintCallable)
     void BeginMessage(FRuntimeDialogueData messageData);
+
+    void BeginChoice(const FRuntimeDialogueData data, FChoiceCallback receiveChoice);
+    
     UFUNCTION(BlueprintCallable)
     void Advance();
     UFUNCTION(BlueprintCallable)

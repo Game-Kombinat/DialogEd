@@ -57,7 +57,30 @@ void UMessagingWidget::BeginMessage(FRuntimeDialogueData messageData) {
     
     loadedWidgets.Remove(widget);
     activeWidgets.Add(widget);
+    widget->ClearChoiceSelectionCallback();
     widget->PrepareForDisplay(messageData, FVector2D(canvasSize.X / 2.25f, canvasSize.Y / 2.25f), activeWidgets.Num()); // adds itself to viewport in the beginning.
+    widget->ForceLayoutPrepass();
+    ForceLayoutPrepass();
+    widget->Show();
+}
+
+void UMessagingWidget::BeginChoice(const FRuntimeDialogueData data, FChoiceCallback receiveChoice) {
+    // get widgets from loadedWidgets list add to screen.
+    // remove from loadedWidgets list.
+    // add to activeWidgets list and start the widget rendering routine.
+    if (loadedWidgets.Num() == 0) {
+        LOG_WARNING("No more widgets available to show message");
+        return;
+    }
+    const auto widget = loadedWidgets[0];
+    const FVector2D canvasSize = GetCachedGeometry().GetLocalSize();
+    LOG_INFO("Canvas Size x: %f, y: %f", canvasSize.X, canvasSize.Y);
+    LOG_INFO("Setting max bubble size to x: %f, y: %f", canvasSize.X / 2.25f, canvasSize.Y / 2.25f);
+    
+    loadedWidgets.Remove(widget);
+    activeWidgets.Add(widget);
+    widget->SetChoiceSelectionCallback(receiveChoice);
+    widget->PrepareForDisplay(data, FVector2D(canvasSize.X / 2.25f, canvasSize.Y / 2.25f), activeWidgets.Num()); // adds itself to viewport in the beginning.
     widget->ForceLayoutPrepass();
     ForceLayoutPrepass();
     widget->Show();

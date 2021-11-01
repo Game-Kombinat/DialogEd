@@ -15,8 +15,11 @@ UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DIALOGED_API UStoryRunner : public UActorComponent {
     GENERATED_BODY()
 
+    // UPROPERTY(Transient)
+    // UStoryThread* currentThread;
+    
     UPROPERTY(Transient)
-    UStoryThread* currentThread;
+    TArray<UStoryThread*> threadStack;
     
     /** Used so we don't expose widgets in non-ui specific code parts. */
     class FMessageManager* messageManager;
@@ -25,6 +28,9 @@ class DIALOGED_API UStoryRunner : public UActorComponent {
     
     UPROPERTY()
     ACharacter* instigatorCharacter;
+
+    UPROPERTY()
+    UStoryAsset* storyAsset;
 
 protected:
     /** Action mapping to poll for when progressing the text or any such thing. */
@@ -48,7 +54,7 @@ public:
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     UFUNCTION(BlueprintCallable)
-    void StartNewStoryThread(UStoryThread* story, APlayerController* controller);
+    void StartNewStoryThread(UStoryThread* thread, APlayerController* controller);
 
     UFUNCTION(BlueprintCallable)
     void StartThreadFromAsset(UStoryAsset* asset, FString threadName, APlayerController* controller);

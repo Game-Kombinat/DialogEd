@@ -140,6 +140,7 @@ UStoryThread* FileParser::ParseThreadHeader(const FString& line, UStoryAsset* st
         const FString threadName = commandMatcher.GetCaptureGroup(1);
         const auto t = NewObject<UStoryThread>(storyAsset, UStoryThread::StaticClass(), FName(threadName));
         t->SetThreadName(threadName);
+        t->SetStoryAsset(storyAsset);
         storyAsset->AddStoryThread(t);
         return t;
     }
@@ -155,6 +156,7 @@ UStoryThread* FileParser::ParseChoiceHeader(const FString& line, UStoryAsset* st
         const FString threadName = commandMatcher.GetCaptureGroup(1);
         const auto t = NewObject<UStoryThread>(storyAsset, UStoryThread::StaticClass(), FName(threadName));
         t->SetThreadName(threadName);
+        t->SetStoryAsset(storyAsset);
         int idx = cmd.AddBranch(threadName);
         storyAsset->AddSubThread(cmd.GetBranchId(idx), t);
         return t;

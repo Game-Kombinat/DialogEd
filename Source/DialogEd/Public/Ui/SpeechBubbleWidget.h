@@ -9,6 +9,8 @@
 #include "Commands/RuntimeDialogueData.h"
 #include "SpeechBubbleWidget.generated.h"
 
+DECLARE_DYNAMIC_DELEGATE_OneParam(FChoiceCallback, int, selectedChoice);
+
 /**
  * 
  */
@@ -26,8 +28,14 @@ protected:
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category="Bubble Setup")
     class URichTextBlock* message;
 
-    // UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category="Bubble Setup")
-    // class UImage* tail;
+    UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category="Bubble Choices")
+    class UUniformGridPanel* choicesPanel;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Bubble Choices")
+    TArray<class UButton*> choiceButtons;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Bubble Choices")
+    TArray<class UTextBlock*> choiceButtonLabels;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Runtime References")
     class UDialogueActor* dialogueActor;
@@ -35,7 +43,11 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Runtime References")
     UUserWidget* parentWidget;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    FChoiceCallback choiceSelectionCallback;
+
     FRuntimeDialogueData currentDialogueData;
+    
 
     FInterpolator interp;
     EBubbleState currentState;
@@ -61,6 +73,8 @@ private:
     void PrepareBubble();
 
 public:
+    void PrepareChoices(TArray<FDialogueBranchId> branches);
+    void HideChoices();
     /**
      * Kicks off a process on this speech bubble to show the dialogue data.
      */
@@ -79,5 +93,21 @@ public:
 
     void SetPosition(FVector2D position);
     bool IsWriting() const;
+    UFUNCTION()
     void Advance();
+    void ClearChoiceSelectionCallback();
+
+    void SetChoiceSelectionCallback(FChoiceCallback receiveChoice);
+
+    UFUNCTION()
+    void OnFirstChoice() const;
+
+    UFUNCTION()
+    void OnSecondChoice() const;
+
+    UFUNCTION()
+    void OnThirdChoice() const;
+
+    UFUNCTION()
+    void OnFourthChoice() const;
 };

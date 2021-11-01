@@ -33,14 +33,19 @@ void UStoryRunner::BeginPlay() {
 // Called every frame
 void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-    // if we have no thread or the current thread ended and the last command is finished
-    if (!currentThread || (!currentThread->CanContinue() && !currentThread->IsRunning())) {
+    if (threadStack.Num() == 0) {
         SetComponentTickEnabled(false);
         messageManager->messaging->RemoveFromViewport();
         // give back character controls when thread is over.
         instigatorCharacter->EnableInput(instigatorController);
         LOG_INFO("Thread ended. Suspending ticking StoryRunner.")
+        return;
+    }
+    
+    const auto currentThread = threadStack[threadStack.Num() - 1];
+    // if we have no thread or the current thread ended and the last command is finished
+    if (!currentThread || (!currentThread->CanContinue() && !currentThread->IsRunning())) {
+        threadStack.Pop();
         return;
     }
 
@@ -52,8 +57,15 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
         return;
     }
     // if no current command or current command is done:
-    if (!currentThread->IsRunning()) {
+    if (!currentThread->IsRunning() && currentThread->CanContinue()) {
         currentThread->CleanupCommand();
+        if (currentThread->IsBranching()) {
+            auto bt = currentThread->GetBranchingTarget();
+            currentThread->BranchingConsumed();
+            auto thread = storyAsset->GetSubThread(bt);
+            threadStack.Push(thread);
+            return;
+        }
         const auto rawCmd = currentThread->GetNext();
         UDialogueCommand* command = commandRegister->GetCommand(rawCmd.commandName);
         if (!command) {
@@ -73,6 +85,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 
         command->SetPlayerController(instigatorController);
         command->SetStoryThread(currentThread);
+        command->SetBranches(rawCmd.branches);
         
         FPreparedCommand currentCommand = FPreparedCommand(command, rawCmd.argumentList, diagActor);
         // and execute it.
@@ -86,9 +99,9 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     }
 }
 
-void UStoryRunner::StartNewStoryThread(UStoryThread* story, APlayerController* controller) {
-    if (currentThread && currentThread->CanContinue()) {
-        LOG_ERROR("Attempted to override already running story thread.");
+void UStoryRunner::StartNewStoryThread(UStoryThread* thread, APlayerController* controller) {
+    if (threadStack.Num() != 0) {
+        LOG_ERROR("Cannot start a new thread while one is already running.");
         return;
     }
     messageManager->SetActionName(inputAction);
@@ -99,11 +112,10 @@ void UStoryRunner::StartNewStoryThread(UStoryThread* story, APlayerController* c
     controlledChar->DisableInput(controller);
     instigatorController = controller;
     instigatorCharacter = controlledChar;
-    
-    currentThread = story;
-    currentThread->ResetStoryThread();
-    // we could reset the currentCommand here but in case it's actually still running
-    // it's better to leave it until it's finished.
+
+    threadStack.Push(thread);
+    thread->ResetStoryThread();
+    storyAsset = thread->GetStoryAsset();
     SetComponentTickEnabled(true);
 }
 

@@ -27,6 +27,9 @@ protected:
     UPROPERTY()
     UStoryThread* myThread;
 
+    UPROPERTY()
+    TArray<FDialogueBranchId> branches;
+
     UClass* targetActorClass = nullptr;
 public:
     /** Minimum number of arguments this requires. Return negative values if there is no minimum. */
@@ -46,6 +49,8 @@ public:
     void SetPlayerController(APlayerController* playerController) { controller = playerController; }
 
     void SetStoryThread(UStoryThread* storyThread) { myThread = storyThread; }
+
+    void SetBranches(const TArray<FDialogueBranchId> dialogueBranches) { branches = dialogueBranches; }
 
     /**
      * Executes the logic of this command. This can be a latent action and before fetching the next one from the stack,

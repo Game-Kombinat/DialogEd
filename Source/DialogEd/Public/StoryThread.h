@@ -23,6 +23,9 @@ protected:
     FString threadName;
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    class UStoryAsset* storyAsset;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TArray<FParsedCommand> commandStack;
 
     // index at which we're currently at in the stack
@@ -30,6 +33,7 @@ protected:
     int threadPointer;
 
     FPreparedCommand currentCommand;
+    FString nextBranchId;
 
     bool isPrimed;
     
@@ -39,11 +43,16 @@ public:
 
     void AddCommand(FParsedCommand command);
 
+    void SetStoryAsset(UStoryAsset* story) { storyAsset = story; }
+
     bool CanContinue() const;
 
     bool IsRunning() const;
 
+    bool IsBranching() const;
+
     FParsedCommand GetNext();
+    FParsedCommand GetCurrent();
     
     void ResetStoryThread();
     FString GetStoryThreadName() const;
@@ -51,6 +60,9 @@ public:
     void SetThreadName(const FString& newThreadName) {
         threadName = newThreadName;
     }
+
+    /** Called from thread runner when the requested branching is being processed.*/
+    void BranchingConsumed();
 
     bool IsPrimed() const;
 
@@ -61,4 +73,7 @@ public:
 
     /** Cleans up current command */
     void CleanupCommand() const;
+    void SetBranchingTarget(int choice);
+    FString GetBranchingTarget() const;
+    UStoryAsset* GetStoryAsset() const;
 };
