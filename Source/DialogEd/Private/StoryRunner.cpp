@@ -38,6 +38,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
         messageManager->messaging->RemoveFromViewport();
         // give back character controls when thread is over.
         instigatorCharacter->EnableInput(instigatorController);
+        instigatorController->SetShowMouseCursor(false);
         LOG_INFO("Thread ended. Suspending ticking StoryRunner.")
         return;
     }
@@ -114,6 +115,7 @@ void UStoryRunner::StartNewStoryThread(UStoryThread* thread, APlayerController* 
     // remove controls from instigator char and store pointers for putting back later
     const auto controlledChar = controller->GetCharacter();
     controlledChar->DisableInput(controller);
+    controller->SetShowMouseCursor(true);
     instigatorController = controller;
     instigatorCharacter = controlledChar;
 
