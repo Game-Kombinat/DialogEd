@@ -22,7 +22,7 @@ class DIALOGED_API UStoryRunner : public UActorComponent {
     TArray<UStoryThread*> threadStack;
     
     /** Used so we don't expose widgets in non-ui specific code parts. */
-    class FMessageManager* messageManager;
+    class UMessageManager* messageManager;
     UPROPERTY()
     APlayerController* instigatorController;
     
@@ -59,7 +59,7 @@ public:
     UFUNCTION(BlueprintCallable)
     void StartThreadFromAsset(UStoryAsset* asset, FString threadName, APlayerController* controller);
 
-    void SetMessageManager(FMessageManager* manager) {
+    void SetMessageManager(UMessageManager* manager) {
         messageManager = manager;
     }
 

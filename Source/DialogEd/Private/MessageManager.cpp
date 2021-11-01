@@ -4,38 +4,44 @@
 #include "MessageManager.h"
 
 #include "Logging.h"
+#include "Ui/MessagingWidget.h"
 
 
-FMessageManager::FMessageManager(): messaging(nullptr) {
+UMessageManager::UMessageManager(): messaging(nullptr) {
 }
 
-FMessageManager::~FMessageManager() {
+UMessageManager::~UMessageManager() {
 }
 
-void FMessageManager::Begin(FRuntimeDialogueData data) const {
+void UMessageManager::SetMessagingWidget(UMessagingWidget* widget) {
+    LOG_INFO("Setting fresh messaging widget: %s", *widget->GetName())
+    messaging = widget;
+}
+
+void UMessageManager::Begin(FRuntimeDialogueData data) const {
     if (messaging) {
         messaging->BeginMessage(data);
     }
 }
 
-void FMessageManager::Begin(FRuntimeDialogueData data, FChoiceCallback receiveChoice) const {
+void UMessageManager::Begin(FRuntimeDialogueData data, FChoiceCallback receiveChoice) const {
     if (messaging) {
         messaging->BeginChoice(data, receiveChoice);
     }
 }
 
-void FMessageManager::Attach(FString message) {
+void UMessageManager::Attach(FString message) {
     // not implemented just yet.
 }
 
-void FMessageManager::Advance() const {
+void UMessageManager::Advance() const {
     if (!messaging) {
         return;
     }
     messaging->Advance();
 }
 
-bool FMessageManager::IsDone() const {
+bool UMessageManager::IsDone() const {
     if (!messaging) {
         LOG_WARNING("messaging is null in MessageManager");
         return true;
@@ -43,7 +49,7 @@ bool FMessageManager::IsDone() const {
     return !messaging->IsDisplayingMessage();
 }
 
-void FMessageManager::Close() const {
+void UMessageManager::Close() const {
     if (messaging) {
         messaging->Close();
     }

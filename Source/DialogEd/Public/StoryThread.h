@@ -72,7 +72,7 @@ public:
     bool RunCommand(FPreparedCommand command);
 
     /** Cleans up current command */
-    void CleanupCommand() const;
+    void CleanupCommand();
     void SetBranchingTarget(int choice);
     FString GetBranchingTarget() const;
     UStoryAsset* GetStoryAsset() const;

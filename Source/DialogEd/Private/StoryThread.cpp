@@ -73,7 +73,7 @@ bool UStoryThread::RunCommand(FPreparedCommand command) {
     
 }
 
-void UStoryThread::CleanupCommand() const {
+void UStoryThread::CleanupCommand() {
     currentCommand.Cleanup();
 }
 

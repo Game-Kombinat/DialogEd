@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "MessageManager.h"
 #include "SpeechBubbleWidget.h"
-#include "UObject/Object.h"
 #include "MessagingWidget.generated.h"
 
 /**

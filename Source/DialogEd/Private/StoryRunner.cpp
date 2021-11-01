@@ -45,6 +45,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     const auto currentThread = threadStack[threadStack.Num() - 1];
     // if we have no thread or the current thread ended and the last command is finished
     if (!currentThread || (!currentThread->CanContinue() && !currentThread->IsRunning())) {
+        LOG_INFO("Thread done. Removing %s", *currentThread->GetStoryThreadName())
         threadStack.Pop();
         return;
     }
@@ -53,6 +54,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     // to draw the god damn messaging system so it has a size.
     // There ought to be a better solution but I can find none.
     if (currentThread && !currentThread->IsPrimed()) {
+        LOG_INFO("Priming thread %s", *currentThread->GetStoryThreadName());
         currentThread->Prime();
         return;
     }
@@ -63,7 +65,9 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
             auto bt = currentThread->GetBranchingTarget();
             currentThread->BranchingConsumed();
             auto thread = storyAsset->GetSubThread(bt);
+            thread->ResetStoryThread();
             threadStack.Push(thread);
+            LOG_INFO("branching into %s", *bt);
             return;
         }
         const auto rawCmd = currentThread->GetNext();
@@ -90,11 +94,11 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
         FPreparedCommand currentCommand = FPreparedCommand(command, rawCmd.argumentList, diagActor);
         // and execute it.
         if (currentThread->RunCommand(currentCommand)) {
-            LOG_INFO("Running new command!");
+            LOG_INFO("Running new command: %s", *rawCmd.commandName);
         }
         else {
             // todo: be nice if we get some diagnostics here as to what exactly went sideways with Verify.
-            LOG_ERROR("Command did not verify.");
+            LOG_ERROR("Command did not verify: %s", *rawCmd.commandName);
         }
     }
 }

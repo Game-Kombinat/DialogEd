@@ -5,6 +5,7 @@
 
 #include "DialogueActor.h"
 #include "Logging.h"
+#include "Ui/MessagingWidget.h"
 
 
 USpeakCommand::USpeakCommand() {
@@ -28,7 +29,6 @@ void USpeakCommand::Execute(UDialogueActor* target, FString arg) {
         LOG_ERROR("No MessageManager in Speak command.")
         return;
     }
-    LOG_INFO("Begin Speak Command");
     inputActionDelegate.BindDynamic(this, &USpeakCommand::OnActionPressed);
     messageManager->messaging->BeginListenToInputAction(messageManager->GetActionName(), inputActionDelegate);
     
@@ -44,7 +44,6 @@ bool USpeakCommand::IsFinished() {
 }
 
 void USpeakCommand::Cleanup() {
-    LOG_INFO("Clean up Speak Command");
     messageManager->messaging->StopListeningToInputAction(messageManager->GetActionName());
     inputActionDelegate.Unbind();
 }

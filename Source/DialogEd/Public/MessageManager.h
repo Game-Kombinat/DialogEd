@@ -3,24 +3,27 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Logging.h"
+#include "Ui/SpeechbubbleWidget.h"
 #include "Commands/RuntimeDialogueData.h"
-#include "Ui/MessagingWidget.h"
+#include "MessageManager.generated.h"
 
 /**
  * Manages messages and commands that are sent to the dialogue
  */
-class DIALOGED_API FMessageManager {
+UCLASS(Blueprintable)
+class DIALOGED_API UMessageManager : public UObject {
+    GENERATED_BODY()
 protected:
     FName advanceActionName;
     
 public:
-    UMessagingWidget* messaging;
-    FMessageManager();
-    ~FMessageManager();
+    UPROPERTY()
+    class UMessagingWidget* messaging;
+    UMessageManager();
+    virtual ~UMessageManager() override;
 
-    void SetMessagingWidget(UMessagingWidget* widget) {
-        messaging = widget;
-    }
+    void SetMessagingWidget(UMessagingWidget* widget);
 
     void SetActionName(FName name) {
         advanceActionName = name;
@@ -49,6 +52,4 @@ public:
     /** Returns true when the message rendering is done and the whole text is shown. */
     bool IsDone() const;
     void Close() const;
-
-    // todo: int GetSelectedChoice(); // to be called after IsDone returns true, at which message manager must have set the selected choice.
 };

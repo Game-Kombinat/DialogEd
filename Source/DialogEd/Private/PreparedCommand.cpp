@@ -4,6 +4,7 @@
 #include "PreparedCommand.h"
 
 #include "DialogueActor.h"
+#include "DialogueCommand.h"
 
 FPreparedCommand::FPreparedCommand() {
     arguments = "";
@@ -53,8 +54,11 @@ void FPreparedCommand::Run() const {
 
 }
 
-void FPreparedCommand::Cleanup() const {
+void FPreparedCommand::Cleanup() {
     if (logic) {
         logic->Cleanup();
     }
+    logic = nullptr;
+    targetActor = nullptr;
+    
 }

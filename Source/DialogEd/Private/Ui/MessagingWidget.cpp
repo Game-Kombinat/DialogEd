@@ -33,6 +33,7 @@ void UMessagingWidget::NativeConstruct() {
         auto bubbleWidget = Cast<USpeechBubbleWidget>(CreateWidgetInstance(*this, bubbleType, FName(FString::Format(TEXT("Bubble {0}"), {i}))));
         loadedWidgets.Add(bubbleWidget);
     }
+    LOG_INFO("Messaging widget constructed: %s", *GetName());
 }
 
 void UMessagingWidget::NativeDestruct() {
@@ -52,8 +53,8 @@ void UMessagingWidget::BeginMessage(FRuntimeDialogueData messageData) {
     }
     const auto widget = loadedWidgets[0];
     const FVector2D canvasSize = GetCachedGeometry().GetLocalSize();
-    LOG_INFO("Canvas Size x: %f, y: %f", canvasSize.X, canvasSize.Y);
-    LOG_INFO("Setting max bubble size to x: %f, y: %f", canvasSize.X / 2.25f, canvasSize.Y / 2.25f);
+    // LOG_INFO("Canvas Size x: %f, y: %f", canvasSize.X, canvasSize.Y);
+    // LOG_INFO("Setting max bubble size to x: %f, y: %f", canvasSize.X / 2.25f, canvasSize.Y / 2.25f);
     
     loadedWidgets.Remove(widget);
     activeWidgets.Add(widget);
@@ -74,8 +75,8 @@ void UMessagingWidget::BeginChoice(const FRuntimeDialogueData data, FChoiceCallb
     }
     const auto widget = loadedWidgets[0];
     const FVector2D canvasSize = GetCachedGeometry().GetLocalSize();
-    LOG_INFO("Canvas Size x: %f, y: %f", canvasSize.X, canvasSize.Y);
-    LOG_INFO("Setting max bubble size to x: %f, y: %f", canvasSize.X / 2.25f, canvasSize.Y / 2.25f);
+    // LOG_INFO("Canvas Size x: %f, y: %f", canvasSize.X, canvasSize.Y);
+    // LOG_INFO("Setting max bubble size to x: %f, y: %f", canvasSize.X / 2.25f, canvasSize.Y / 2.25f);
     
     loadedWidgets.Remove(widget);
     activeWidgets.Add(widget);
@@ -93,11 +94,9 @@ void UMessagingWidget::Advance() {
         return;
     }
     if (activeWidgets[0]->IsWriting()) {
-        LOG_INFO("Advancing bubble");
         activeWidgets[0]->Advance();
     }
     else {
-        LOG_INFO("Closing bubble via advance");
         Close();
     }
 }
@@ -125,6 +124,10 @@ void UMessagingWidget::StopListeningToInputAction(FName actionName) {
 }
 
 bool UMessagingWidget::IsDisplayingMessage() const {
+    if (activeWidgets.Num() == 0 && loadedWidgets.Num() == 0) {
+        return false;
+    }
+    
     for (auto widget : activeWidgets) {
         if (widget->IsInViewport()) {
             return true;

@@ -21,5 +21,5 @@ public:
     bool Verify() const;
     bool IsFinished() const;
     void Run() const;
-    void Cleanup() const;
+    void Cleanup();
 };

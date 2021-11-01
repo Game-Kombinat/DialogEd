@@ -16,7 +16,7 @@ UCLASS(Abstract, Transient)
 class DIALOGED_API UDialogueCommand : public UObject {
     GENERATED_BODY()
 protected:
-    FMessageManager* messageManager = nullptr;
+    UMessageManager* messageManager = nullptr;
 
     UPROPERTY()
     UWorld* activeWorld;
@@ -38,19 +38,19 @@ public:
     virtual int MaxArguments() { return 1; }
 
     /** Get the type of the actor that is expected as argument. May return nullptr if no actor is required. */
-    UClass* TargetActorType() const { return targetActorClass; }
+    UClass* TargetActorType() const;
 
     /** Pass on the message manager instance to this command. */
-    void SetMessageManager(FMessageManager* msgManager) { messageManager = msgManager; }
+    void SetMessageManager(UMessageManager* msgManager);
 
     /** Set the world to get all the uobjects a command may need */
-    void SetWorld(UWorld* world) { this->activeWorld = world; }
+    void SetWorld(UWorld* world);
 
-    void SetPlayerController(APlayerController* playerController) { controller = playerController; }
+    void SetPlayerController(APlayerController* playerController);
 
-    void SetStoryThread(UStoryThread* storyThread) { myThread = storyThread; }
+    void SetStoryThread(UStoryThread* storyThread);
 
-    void SetBranches(const TArray<FDialogueBranchId> dialogueBranches) { branches = dialogueBranches; }
+    void SetBranches(const TArray<FDialogueBranchId> dialogueBranches);
 
     /**
      * Executes the logic of this command. This can be a latent action and before fetching the next one from the stack,
