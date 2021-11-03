@@ -8,6 +8,7 @@
 #include "Logging.h"
 #include "PreparedCommand.h"
 #include "StoryThread.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "GameFramework/Character.h"
 #include "Ui/MessagingWidget.h"
 
@@ -29,16 +30,29 @@ void UStoryRunner::BeginPlay() {
     SetComponentTickEnabled(false);
 }
 
+void UStoryRunner::EndPlay(const EEndPlayReason::Type endPlayReason) {
+    // if we stop play mid execution, we need to clean this up
+    if (threadStack.Num() > 0) {
+        for (auto t : threadStack) {
+            if (t) {
+                t->CleanupCommand();
+            }
+        }
+    }
+}
+
 
 // Called every frame
 void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     if (threadStack.Num() == 0) {
         SetComponentTickEnabled(false);
-        messageManager->messaging->RemoveFromViewport();
+        messageManager->RemoveFromViewport();
+        UWidgetBlueprintLibrary::SetInputMode_GameOnly(instigatorController);
+        instigatorController->SetInputMode(FInputModeGameOnly());
         // give back character controls when thread is over.
         instigatorCharacter->EnableInput(instigatorController);
-        instigatorController->SetShowMouseCursor(false);
+        // instigatorController->SetShowMouseCursor(false);
         LOG_INFO("Thread ended. Suspending ticking StoryRunner.")
         return;
     }
@@ -71,6 +85,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
             LOG_INFO("branching into %s", *bt);
             return;
         }
+        messageManager->SetStoryThread(currentThread);
         const auto rawCmd = currentThread->GetNext();
         UDialogueCommand* command = commandRegister->GetCommand(rawCmd.commandName);
         if (!command) {
@@ -109,13 +124,13 @@ void UStoryRunner::StartNewStoryThread(UStoryThread* thread, APlayerController* 
         LOG_ERROR("Cannot start a new thread while one is already running.");
         return;
     }
-    messageManager->SetActionName(inputAction);
-    messageManager->messaging->AddToViewport();
-    messageManager->messaging->ForceLayoutPrepass();
+    
+    messageManager->AddToViewport();
     // remove controls from instigator char and store pointers for putting back later
     const auto controlledChar = controller->GetCharacter();
+    UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(controller);
     controlledChar->DisableInput(controller);
-    controller->SetShowMouseCursor(true);
+    // controller->SetShowMouseCursor(true);
     instigatorController = controller;
     instigatorCharacter = controlledChar;
 

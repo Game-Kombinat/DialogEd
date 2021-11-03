@@ -22,10 +22,8 @@ void UChoiceCommand::Execute(UDialogueActor* target, FString arg) {
     
     FRuntimeDialogueData d = FRuntimeDialogueData(target, arg);
     d.SetBranches(branches);
-    choiceCallback.Unbind();
-    choiceCallback.BindDynamic(this, &UChoiceCommand::ReceiveChoice);
     //choiceCallback.BindUObject();
-    messageManager->Begin(d, choiceCallback);
+    messageManager->Begin(d);
 }
 
 bool UChoiceCommand::IsFinished() {

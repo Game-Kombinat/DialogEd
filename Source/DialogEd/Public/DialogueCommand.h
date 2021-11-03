@@ -16,6 +16,7 @@ UCLASS(Abstract, Transient)
 class DIALOGED_API UDialogueCommand : public UObject {
     GENERATED_BODY()
 protected:
+    UPROPERTY()
     UMessageManager* messageManager = nullptr;
 
     UPROPERTY()

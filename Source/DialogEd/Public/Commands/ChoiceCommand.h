@@ -15,7 +15,6 @@ class DIALOGED_API UChoiceCommand : public UDialogueCommand {
     GENERATED_BODY()
     bool choiceReceived;
     int playerChoice;
-    FChoiceCallback choiceCallback;
 public:
     UChoiceCommand();
     // arguments here denote the text spoken to formulate a question.

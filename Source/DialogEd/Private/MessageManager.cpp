@@ -24,11 +24,6 @@ void UMessageManager::Begin(FRuntimeDialogueData data) const {
     }
 }
 
-void UMessageManager::Begin(FRuntimeDialogueData data, FChoiceCallback receiveChoice) const {
-    if (messaging) {
-        messaging->BeginChoice(data, receiveChoice);
-    }
-}
 
 void UMessageManager::Attach(FString message) {
     // not implemented just yet.
@@ -54,4 +49,21 @@ void UMessageManager::Close() const {
         messaging->Close();
     }
     
+}
+
+void UMessageManager::SetStoryThread(UStoryThread* story) {
+    currentStoryThread = story;
+    if (messaging) {
+        messaging->SetCurrentStory(story);
+    }
+}
+
+
+void UMessageManager::RemoveFromViewport() const {
+    messaging->RemoveFromViewport();
+}
+
+void UMessageManager::AddToViewport() const {
+    messaging->AddToViewport(0);
+    messaging->ForceLayoutPrepass();
 }

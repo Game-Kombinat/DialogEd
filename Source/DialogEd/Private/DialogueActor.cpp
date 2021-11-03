@@ -3,6 +3,9 @@
 
 #include "DialogueActor.h"
 
+#include "GameFramework/GameModeBase.h"
+#include "Kismet/GameplayStatics.h"
+
 
 // Sets default values for this component's properties
 UDialogueActor::UDialogueActor() {

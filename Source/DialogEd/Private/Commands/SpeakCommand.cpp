@@ -29,9 +29,6 @@ void USpeakCommand::Execute(UDialogueActor* target, FString arg) {
         LOG_ERROR("No MessageManager in Speak command.")
         return;
     }
-    inputActionDelegate.BindDynamic(this, &USpeakCommand::OnActionPressed);
-    messageManager->messaging->BeginListenToInputAction(messageManager->GetActionName(), inputActionDelegate);
-    
     messageManager->Begin(FRuntimeDialogueData(target, arg));
 }
 
@@ -44,10 +41,4 @@ bool USpeakCommand::IsFinished() {
 }
 
 void USpeakCommand::Cleanup() {
-    messageManager->messaging->StopListeningToInputAction(messageManager->GetActionName());
-    inputActionDelegate.Unbind();
-}
-
-void USpeakCommand::OnActionPressed() {
-    messageManager->Advance();
 }
