@@ -105,14 +105,26 @@ bool FileParser::BeginsBranch(const FString& line) {
 }
 
 FParsedCommand FileParser::ParseWithCommand(const FString& line) {
-    // -> commandName actorName arg1 arg2 arg3 ...
-    const FRegexPattern commandPattern(TEXT("->\\s*(\\w+)\\s(\\w+)\\s(.*)"));
+    // -> commandName actorName(or arg0) arg1 arg2 arg3 ...
+    // ->\\s*(\\w+)\\s*(.*)
+    // old: ->\\s*(\\w+)\\s(\\w+)\\s(.*)
+    const FRegexPattern commandPattern(TEXT("->\\s*(\\w+)\\s*(.*)"));
     FRegexMatcher commandMatcher(commandPattern, *line);
     if (commandMatcher.FindNext()) {
         const FString commandName = commandMatcher.GetCaptureGroup(1);
-        const FString actorName = commandMatcher.GetCaptureGroup(2);
-        const FString arguments = commandMatcher.GetCaptureGroup(3);
-        return FParsedCommand(commandName, actorName, arguments);
+        const FString arguments = commandMatcher.GetCaptureGroup(2);
+        const FRegexPattern actorPattern(TEXT("(\\w+)\\s+(.*)"));
+        FRegexMatcher actorMatcher(actorPattern, *arguments);
+        if (actorMatcher.FindNext()) {
+            const FString actorName = actorMatcher.GetCaptureGroup(1);
+            const FString restArgs = actorMatcher.GetCaptureGroup(2);
+            return FParsedCommand(commandName, actorName, restArgs);
+        }
+        // command without arguments
+        return FParsedCommand(commandName, arguments);
+        // const FString actorName = commandMatcher.GetCaptureGroup(2);
+        
+        
     }
     LOG_ERROR("Failed to parse command %s", *line);
     return FParsedCommand();

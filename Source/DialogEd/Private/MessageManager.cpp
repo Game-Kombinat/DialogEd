@@ -4,6 +4,7 @@
 #include "MessageManager.h"
 
 #include "Logging.h"
+#include "StoryThread.h"
 #include "Ui/MessagingWidget.h"
 
 
@@ -56,6 +57,10 @@ void UMessageManager::SetStoryThread(UStoryThread* story) {
     if (messaging) {
         messaging->SetCurrentStory(story);
     }
+}
+
+void UMessageManager::SetRelevantActors(const TArray<UDialogueActor*> actors) const {
+    messaging->SetRelevantActors(actors);
 }
 
 

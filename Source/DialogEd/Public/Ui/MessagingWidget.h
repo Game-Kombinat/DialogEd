@@ -17,6 +17,9 @@ protected:
     UPROPERTY()
     class UStoryThread* currentStoryThread;
 
+    UPROPERTY()
+    TArray<class UDialogueActor*> relevantActors;
+
 public:
     // Need this ticking to handle animation and state and position
     virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override PURE_VIRTUAL(UMessagingWidget::NativeTick);
@@ -41,5 +44,7 @@ public:
     virtual void OnProceed() PURE_VIRTUAL(UMessagingWidget::OnProceed);
 
     void SetCurrentStory(UStoryThread* storyThread);
+
+    void SetRelevantActors(TArray<UDialogueActor*> actors);
 
 };

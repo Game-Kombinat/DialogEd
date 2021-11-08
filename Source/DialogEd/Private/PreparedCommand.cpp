@@ -12,18 +12,19 @@ FPreparedCommand::FPreparedCommand() {
     logic = nullptr;
 }
 
-FPreparedCommand::FPreparedCommand(UDialogueCommand* command, FString args, UDialogueActor* inTargetActor) {
-    arguments = args;
+FPreparedCommand::FPreparedCommand(UDialogueCommand* cmd, FParsedCommand rawCmd, UDialogueActor* inTargetActor) {
+    command = rawCmd;
+    arguments = rawCmd.argumentList;
     targetActor = inTargetActor;
-    logic = command;
-    args.ParseIntoArray(argumentList, *FString(" "));
+    logic = cmd;
+    arguments.ParseIntoArray(argumentList, *FString(" "));
 }
 
 FPreparedCommand::~FPreparedCommand() {
 }
 
 bool FPreparedCommand::HasValidSetup() const {
-    return logic != nullptr && targetActor != nullptr;
+    return logic != nullptr && (targetActor != nullptr || !command.requiresActor);
 }
 
 bool FPreparedCommand::Verify() const {
@@ -41,6 +42,9 @@ bool FPreparedCommand::Verify() const {
 }
 
 bool FPreparedCommand::IsFinished() const {
+    if (!logic) {
+        return true;
+    }
     return logic->IsFinished();
 }
 

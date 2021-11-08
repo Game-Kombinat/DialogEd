@@ -41,6 +41,22 @@ void UStoryRunner::EndPlay(const EEndPlayReason::Type endPlayReason) {
     }
 }
 
+void UStoryRunner::HandleActorsInThread() {
+    actorsInActiveThread.Empty();
+    auto currentThread = threadStack[threadStack.Num() - 1];
+    if (!currentThread) {
+        LOG_ERROR("Cannot handle actors in current thread - there is no current thread!");
+        return;
+    }
+    for (const auto a : currentThread->actorsInThread) {
+        auto resolvedActor = actorRegister->GetActorForTag(a);
+        if (resolvedActor) {
+            actorsInActiveThread.Add(resolvedActor);
+        }
+    }
+    messageManager->SetRelevantActors(actorsInActiveThread);
+}
+
 
 // Called every frame
 void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
@@ -65,12 +81,13 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
         return;
     }
 
-    // This is actually just to give the fucking slate rendering time for a tick
+    // This actually was just to give the fucking slate rendering time for a tick
     // to draw the god damn messaging system so it has a size.
-    // There ought to be a better solution but I can find none.
+    // But it turned out to be a useful step for many things.
     if (currentThread && !currentThread->IsPrimed()) {
         LOG_INFO("Priming thread %s", *currentThread->GetStoryThreadName());
         currentThread->Prime();
+        HandleActorsInThread();
         return;
     }
     // if no current command or current command is done:
@@ -93,12 +110,16 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
             SetComponentTickEnabled(false);
             return;
         }
-        UDialogueActor* diagActor = actorRegister->GetActorForTag(rawCmd.targetActor);
-        if (!diagActor) {
-            LOG_ERROR("Unmapped actor name: %s", *(rawCmd.targetActor));
-            SetComponentTickEnabled(false);
-            return;
+        UDialogueActor* diagActor = nullptr;
+        if (rawCmd.requiresActor) {
+            diagActor = actorRegister->GetActorForTag(rawCmd.targetActor);
+            if (!diagActor) {
+                LOG_ERROR("Unmapped actor name: %s", *(rawCmd.targetActor));
+                SetComponentTickEnabled(false);
+                return;
+            }
         }
+        
         // todo: would be better if that happens only once when instantiating the command first time
         command->SetMessageManager(messageManager);
         command->SetWorld(GetWorld());
@@ -107,7 +128,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
         command->SetStoryThread(currentThread);
         command->SetBranches(rawCmd.branches);
         
-        FPreparedCommand currentCommand = FPreparedCommand(command, rawCmd.argumentList, diagActor);
+        FPreparedCommand currentCommand = FPreparedCommand(command, rawCmd, diagActor);
         // and execute it.
         if (currentThread->RunCommand(currentCommand)) {
             LOG_INFO("Running new command: %s", *rawCmd.commandName);

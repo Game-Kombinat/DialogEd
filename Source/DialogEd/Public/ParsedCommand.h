@@ -21,6 +21,10 @@ struct FParsedCommand {
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString targetActor;
 
+    /** If this command required the targetActor to be resolved or not. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool requiresActor;
+
     /** List of arguments sans the actor name */
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString argumentList;
@@ -36,10 +40,14 @@ struct FParsedCommand {
         // just to signify that this is wrong.
         commandName = "unknown";
         targetActor = "none";
+        requiresActor = true;
         parsingId = -1;
     }
 
-    FParsedCommand(const FString name, const FString actorName, const FString args) : commandName(name), targetActor(actorName), argumentList(args) {
+    FParsedCommand(const FString name, const FString actorName, const FString args) : commandName(name), targetActor(actorName), requiresActor(true), argumentList(args) {
+        parsingId = parsingIndex++;
+    }
+    FParsedCommand(const FString name, const FString args) : commandName(name), requiresActor(false), argumentList(args) {
         parsingId = parsingIndex++;
     }
 

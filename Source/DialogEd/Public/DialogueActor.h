@@ -9,7 +9,7 @@
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class DIALOGED_API UDialogueActor : public UActorComponent {
+class DIALOGED_API UDialogueActor : public USceneComponent {
     GENERATED_BODY()
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Dialogue Data")

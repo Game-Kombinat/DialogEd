@@ -19,6 +19,9 @@ UStoryThread::UStoryThread(FString displayName) {
 
 void UStoryThread::AddCommand(const FParsedCommand command) {
     commandStack.Add(command);
+    if (command.requiresActor && !actorsInThread.Contains(command.targetActor)) {
+        actorsInThread.Add(command.targetActor);
+    }
 }
 
 bool UStoryThread::CanContinue() const {

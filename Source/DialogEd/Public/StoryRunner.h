@@ -45,12 +45,16 @@ protected:
     class UActorRegister* actorRegister;
 
 public:
+    UPROPERTY()
+    TArray<UDialogueActor*> actorsInActiveThread;
     // Sets default values for this component's properties
     UStoryRunner();
 
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    void HandleActorsInThread();
 
 public:
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ParsedCommand.h"
 
 /**
  * This is a ready-to-execute piece of command that sits on the execution stack
@@ -13,9 +14,10 @@ class DIALOGED_API FPreparedCommand {
     FString arguments;
     TArray<FString> argumentList;
     class UDialogueActor* targetActor;
+    FParsedCommand command;
 public:
     FPreparedCommand();
-    FPreparedCommand(UDialogueCommand* command, FString args, UDialogueActor* targetActor);
+    FPreparedCommand(UDialogueCommand* command, FParsedCommand rawCmd, UDialogueActor* targetActor);
     ~FPreparedCommand();
     bool HasValidSetup() const;
     bool Verify() const;

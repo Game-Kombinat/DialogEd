@@ -43,6 +43,8 @@ public:
     void Close() const;
 
     void SetStoryThread(UStoryThread* story);
+
+    void SetRelevantActors(TArray<UDialogueActor*> actors) const;
     
     void RemoveFromViewport() const;
     void AddToViewport() const;

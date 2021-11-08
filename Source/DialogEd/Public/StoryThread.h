@@ -38,6 +38,9 @@ protected:
     bool isPrimed;
     
 public:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TArray<FString> actorsInThread;
+    
     UStoryThread();
     explicit UStoryThread(FString displayName);
 
