@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DataContextContainer.h"
 #include "Commands/RuntimeDialogueData.h"
 #include "MessageManager.generated.h"
 
@@ -11,13 +12,15 @@
  * Also provides an interface to listen to input actions.
  */
 UCLASS(Blueprintable)
-class DIALOGED_API UMessageManager : public UObject {
+class DIALOGED_API UMessageManager : public UObject, public IDataContextContainer {
     GENERATED_BODY()
 protected:
     UPROPERTY()
     class UMessagingWidget* messaging;
     UPROPERTY()
     class UStoryThread* currentStoryThread;
+    UPROPERTY()
+    class UGameDataContext* dataContext;
 public:
     
     UMessageManager();
@@ -48,4 +51,8 @@ public:
     
     void RemoveFromViewport() const;
     void AddToViewport() const;
+
+    void SetDataContext(UGameDataContext* dc);
+    UFUNCTION()
+    virtual UGameDataContext* GetDataContext() override; 
 };

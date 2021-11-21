@@ -267,22 +267,22 @@ bool FileParser::BeginsElse(const FString& line) {
 int FileParser::ParseCondition(UStoryAsset* storyAsset, UStoryThread* outerThread, TArray<FString> lines, int lineNum) {
     FString headerLine = lines[lineNum];
     // ? if NameOrNumber >= OtherNameOrNumber
+    // we match pieces here to do some sanitizing of the input in case someone derped on whitespaces and whatnot
     const FRegexPattern commandPattern(TEXT("\\?\\W*if\\W*(\\w+)\\W*(<|>|==|>=|<=|!=)\\W*(\\w+)"));
     FRegexMatcher commandMatcher(commandPattern, *headerLine);
     if (commandMatcher.FindNext()) {
-        const FString speaker = commandMatcher.GetCaptureGroup(1);
-        // parsed commands can now have branches.
-        // threads have a map containing subthreads, keyed by an id (commandName_branchName).
-        // This way a unique address is known and accessible for each possible branch.
-        const FString message = commandMatcher.GetCaptureGroup(2);
-        FParsedCommand cmd = FParsedCommand("if", speaker, message);
-        return ParseConditionalSubThreads(storyAsset, outerThread, lines, lineNum+1, cmd, "if");
+        const FString lhs = commandMatcher.GetCaptureGroup(1).TrimStartAndEnd();
+        // here we replace spaces - for instance if someone types > = instead of >=, this will fix it
+        const FString op = commandMatcher.GetCaptureGroup(2).Replace(TEXT(" "), TEXT("")).TrimStartAndEnd();
+        const FString rhs = commandMatcher.GetCaptureGroup(3).TrimStartAndEnd();
+        
+        FParsedCommand cmd = FParsedCommand("if", FString::Format(TEXT("{0} {1} {2}"), {lhs, op, rhs}));
+        return ParseConditionalSubThreads(storyAsset, outerThread, lines, lineNum+1, cmd, headerLine);
     }
     return lineNum;
 }
 
 int FileParser::ParseConditionalSubThreads(UStoryAsset* story, UStoryThread* outerThread, TArray<FString>& lines, int lineNum, FParsedCommand& branchingCommand, FString threadName) {
-    
     UStoryThread* currentThread = NewObject<UStoryThread>(story, UStoryThread::StaticClass(), FName(threadName));
     currentThread->SetThreadName(threadName);
     currentThread->SetStoryAsset(story);
@@ -298,7 +298,8 @@ int FileParser::ParseConditionalSubThreads(UStoryAsset* story, UStoryThread* out
             return i;
         }
         if (BeginsElse(line)) {
-            return ParseConditionalSubThreads(story, outerThread, lines, i + 1, branchingCommand, "else");
+            // else takes the outer thread because it's parented to the same one as the if branch.
+            return ParseConditionalSubThreads(story, outerThread, lines, i + 1, branchingCommand, threadName.Append(") else"));
         }
 
         if (!currentThread) {

@@ -55,6 +55,7 @@ void UStoryRunner::HandleActorsInThread() {
         }
     }
     messageManager->SetRelevantActors(actorsInActiveThread);
+    messageManager->SetDataContext(dataContext);
 }
 
 

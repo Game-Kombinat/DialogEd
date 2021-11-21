@@ -72,3 +72,11 @@ void UMessageManager::AddToViewport() const {
     messaging->AddToViewport(0);
     messaging->ForceLayoutPrepass();
 }
+
+void UMessageManager::SetDataContext(UGameDataContext* dc) {
+    dataContext = dc;
+}
+
+UGameDataContext* UMessageManager::GetDataContext() {
+    return dataContext;
+}

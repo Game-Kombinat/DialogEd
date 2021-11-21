@@ -41,6 +41,7 @@ public:
     /** Get the type of the actor that is expected as argument. May return nullptr if no actor is required. */
     UClass* TargetActorType() const;
 
+    // rider may show these are not implemented due to a b_ug somewhere somehow but they are all implemented.
     /** Pass on the message manager instance to this command. */
     void SetMessageManager(UMessageManager* msgManager);
 

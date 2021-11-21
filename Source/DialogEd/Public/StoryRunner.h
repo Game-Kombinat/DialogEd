@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameDataContext.h"
 #include "StoryAsset.h"
 #include "StoryThread.h"
 #include "Components/ActorComponent.h"
@@ -32,6 +33,9 @@ class DIALOGED_API UStoryRunner : public UActorComponent {
 
     UPROPERTY()
     UStoryAsset* storyAsset;
+    
+    UPROPERTY()
+    UGameDataContext* dataContext;
 
 protected:
     /** Action mapping to poll for when progressing the text or any such thing. */
@@ -67,5 +71,9 @@ public:
 
     void SetMessageManager(UMessageManager* manager) {
         messageManager = manager;
+    }
+
+    void SetDataContext(UGameDataContext* dc) {
+        dataContext = dc;
     }
 };

@@ -17,7 +17,7 @@ FPreparedCommand::FPreparedCommand(UDialogueCommand* cmd, FParsedCommand rawCmd,
     arguments = rawCmd.argumentList;
     targetActor = inTargetActor;
     logic = cmd;
-    arguments.ParseIntoArray(argumentList, *FString(" "));
+    arguments.ParseIntoArray(argumentList, TEXT(" "));
 }
 
 FPreparedCommand::~FPreparedCommand() {
