@@ -10,7 +10,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType)
 class DIALOGED_API UStoryAsset : public UObject {
     GENERATED_BODY()
 protected:

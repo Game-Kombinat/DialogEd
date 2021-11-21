@@ -78,5 +78,6 @@ public:
     void CleanupCommand();
     void SetBranchingTarget(int choice);
     FString GetBranchingTarget() const;
+    UFUNCTION(BlueprintCallable)
     UStoryAsset* GetStoryAsset() const;
 };
