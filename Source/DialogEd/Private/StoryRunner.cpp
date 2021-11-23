@@ -8,9 +8,11 @@
 #include "Logging.h"
 #include "PreparedCommand.h"
 #include "StoryAsset.h"
+#include "StoryRunnerDelayedAction.h"
 #include "StoryThread.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "GameFramework/Character.h"
+#include "Kismet/KismetStringLibrary.h"
 #include "Ui/MessagingWidget.h"
 
 
@@ -29,6 +31,8 @@ void UStoryRunner::BeginPlay() {
     actorRegister->OnBeginPlay(GetWorld());
     commandRegister->OnBeginPlay();
     SetComponentTickEnabled(false);
+    FLatentActionManager::OnLatentActionsChanged().AddUObject(this, &UStoryRunner::Observe);
+    // FLatentActionManager::OnLatentActionsChanged().AddUFunction(this, FName("Observe"));
 }
 
 void UStoryRunner::EndPlay(const EEndPlayReason::Type endPlayReason) {
@@ -58,6 +62,15 @@ void UStoryRunner::HandleActorsInThread() {
     messageManager->SetDataContext(dataContext);
 }
 
+void UStoryRunner::Observe(UObject* obj, ELatentActionChangeType changeType) {
+    if (obj) {
+        LOG_INFO("LAM changed for obj %s, type %i", *obj->GetName(), static_cast<int>(changeType));
+    }
+    else {
+        LOG_INFO("LAM changed for null obj, type %i", static_cast<int>(changeType));
+    }
+}
+
 
 // Called every frame
 void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
@@ -70,6 +83,9 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
         // give back character controls when thread is over.
         instigatorCharacter->EnableInput(instigatorController);
         // instigatorController->SetShowMouseCursor(false);
+        if (onFinished.IsBound()) {
+            onFinished.Broadcast();
+        }
         LOG_INFO("Thread ended. Suspending ticking StoryRunner.")
         return;
     }
@@ -167,6 +183,39 @@ void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName, 
         StartNewStoryThread(thread, controller);
     }
 }
+
+bool UStoryRunner::IsRunning() const {
+    return threadStack.Num() > 0;
+}
+
+// void UStoryRunner::StartStory(const UObject* worldContext, UStoryRunner* runner, UStoryAsset* asset, FString threadName, APlayerController* controller, FLatentActionInfo LatentInfo) {
+//     auto world = worldContext->GetWorld();
+//     if (world) {
+//         auto lam = world->GetLatentActionManager();
+//         if (lam.FindExistingAction<FStoryRunnerDelayedAction>(latentInfo.CallbackTarget, latentInfo.UUID) == nullptr) {
+//             // runner->StartThreadFromAsset(asset, threadName, controller);
+//             lam.AddNewAction(latentInfo.CallbackTarget, latentInfo.UUID, new FStoryRunnerDelayedAction(runner, latentInfo));
+//         }
+//     }
+//     else {
+//         LOG_ERROR("No World")
+//     }
+// }
+
+// void UStoryRunner::StartStory(UStoryAsset* asset, FString threadName, APlayerController* controller, FLatentActionInfo latentInfo) {
+//     auto world = GetWorld();
+//     if (world) {
+//         
+//         auto lam = world->GetLatentActionManager();
+//         if (lam.FindExistingAction<FStoryRunnerDelayedAction>(latentInfo.CallbackTarget, latentInfo.UUID) == nullptr) {
+//             StartThreadFromAsset(asset, threadName, controller);
+//             lam.AddNewAction(latentInfo.CallbackTarget, latentInfo.UUID, new FStoryRunnerDelayedAction(this, latentInfo));
+//         }
+//     }
+//     else {
+//         LOG_ERROR("No World")
+//     }
+// }
 
 UMessageManager* UStoryRunner::GetMessageManager() const {
     return messageManager;

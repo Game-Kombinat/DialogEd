@@ -8,13 +8,13 @@
 #include "Kismet/KismetStringLibrary.h"
 
 
-SetVarCommand::SetVarCommand() {
+USetVarCommand::USetVarCommand() {
 }
 
-SetVarCommand::~SetVarCommand() {
+USetVarCommand::~USetVarCommand() {
 }
 
-void SetVarCommand::Execute(TSharedRef<FParsedCommand> cmd) {
+void USetVarCommand::Execute(TSharedRef<FParsedCommand> cmd) {
     FString name = cmd->argumentArray[0];
     FString rawValue = cmd->argumentArray[1];
     if (!UKismetStringLibrary::IsNumeric(rawValue)) {
@@ -25,10 +25,9 @@ void SetVarCommand::Execute(TSharedRef<FParsedCommand> cmd) {
     storyRunner->GetDataContext()->SetValue(name, value);
 }
 
-bool SetVarCommand::IsFinished() {
+bool USetVarCommand::IsFinished() {
     return true;
 }
 
-void SetVarCommand::Cleanup() {
-    UDialogueCommand::Cleanup();
+void USetVarCommand::Cleanup() {
 }

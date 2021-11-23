@@ -5,11 +5,13 @@
 #include "CoreMinimal.h"
 #include "DataContextContainer.h"
 #include "GameDataContext.h"
-#include "StoryThread.h"
 #include "Components/ActorComponent.h"
 #include "StoryRunner.generated.h"
 
+class UStoryThread;
 class UDialogueActor;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStoryFinishedCallback);
 /**
  * Runs a StoryThread until its done.
  */
@@ -33,7 +35,7 @@ class DIALOGED_API UStoryRunner : public UActorComponent, public IDataContextCon
     ACharacter* instigatorCharacter;
 
     UPROPERTY()
-    UStoryAsset* storyAsset;
+    class UStoryAsset* storyAsset;
     
     UPROPERTY()
     UGameDataContext* dataContext;
@@ -49,7 +51,12 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     class UActorRegister* actorRegister;
 
+    
+
 public:
+    UPROPERTY(BlueprintAssignable)
+    FStoryFinishedCallback onFinished;
+    
     UPROPERTY()
     TArray<UDialogueActor*> actorsInActiveThread;
     // Sets default values for this component's properties
@@ -62,15 +69,15 @@ protected:
     void HandleActorsInThread();
 
 public:
+    void Observe(UObject* obj, ELatentActionChangeType changeType);
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     UFUNCTION()
     virtual UGameDataContext* GetDataContext() override; 
 
-    UFUNCTION(BlueprintCallable)
     void StartNewStoryThread(UStoryThread* thread, APlayerController* controller);
 
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable, meta=(Latent))
     void StartThreadFromAsset(UStoryAsset* asset, FString threadName, APlayerController* controller);
 
     void SetMessageManager(UMessageManager* manager) {
@@ -80,6 +87,11 @@ public:
     void SetDataContext(UGameDataContext* dc) {
         dataContext = dc;
     }
+
+    bool IsRunning() const;
+
+    // Stories are inherently latent, this provides an interface so we can chain the execution after story is finished.
+    
 
     UMessageManager* GetMessageManager() const;
     UDialogueActor* GetDialogueActor(const FString& nameOrTag) const;

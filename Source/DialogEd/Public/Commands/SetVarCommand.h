@@ -4,14 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "DialogueCommand.h"
-
+#include "SetVarCommand.generated.h"
 /**
  * 
  */
-class DIALOGED_API SetVarCommand : public UDialogueCommand {
+UCLASS()
+class DIALOGED_API USetVarCommand : public UDialogueCommand {
+    GENERATED_BODY()
 public:
-    SetVarCommand();
-    virtual ~SetVarCommand() override;
+    USetVarCommand();
+    virtual ~USetVarCommand() override;
 
     virtual int MinArguments() override { return 2; } //  var name and var value
     virtual int MaxArguments() override { return 2; } //  and nothing more!
