@@ -11,13 +11,10 @@
  */
 class DIALOGED_API FPreparedCommand {
     class UDialogueCommand* logic;
-    FString arguments;
-    TArray<FString> argumentList;
-    class UDialogueActor* targetActor;
-    FParsedCommand command;
+    TSharedRef<FParsedCommand> command;
 public:
     FPreparedCommand();
-    FPreparedCommand(UDialogueCommand* command, FParsedCommand rawCmd, UDialogueActor* targetActor);
+    FPreparedCommand(UDialogueCommand* command, TSharedRef<FParsedCommand> rawCmd);
     ~FPreparedCommand();
     bool HasValidSetup() const;
     bool Verify() const;

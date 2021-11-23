@@ -121,18 +121,7 @@ FParsedCommand FileParser::ParseWithCommand(const FString& line) {
     if (commandMatcher.FindNext()) {
         const FString commandName = commandMatcher.GetCaptureGroup(1);
         const FString arguments = commandMatcher.GetCaptureGroup(2);
-        const FRegexPattern actorPattern(TEXT("(\\w+)\\s+(.*)"));
-        FRegexMatcher actorMatcher(actorPattern, *arguments);
-        if (actorMatcher.FindNext()) {
-            const FString actorName = actorMatcher.GetCaptureGroup(1);
-            const FString restArgs = actorMatcher.GetCaptureGroup(2);
-            return FParsedCommand(commandName, actorName, restArgs);
-        }
-        // command without arguments
         return FParsedCommand(commandName, arguments);
-        // const FString actorName = commandMatcher.GetCaptureGroup(2);
-        
-        
     }
     LOG_ERROR("Failed to parse command %s", *line);
     return FParsedCommand();
@@ -146,7 +135,8 @@ FParsedCommand FileParser::ParseWithSpeakCommand(const FString& line) {
     if (commandMatcher.FindNext()) {
         const FString speakerName = commandMatcher.GetCaptureGroup(1);
         const FString text = commandMatcher.GetCaptureGroup(2);
-        return FParsedCommand("speak", speakerName, text);
+        
+        return FParsedCommand("speak", FString::Format(TEXT("{0} {1}"), {speakerName, text}));
     }
     LOG_ERROR("Failed to parse speak command %s", *line);
     return FParsedCommand();
@@ -196,7 +186,9 @@ int FileParser::ParseChoiceCommand(UStoryAsset* storyAsset, UStoryThread* outerT
         // threads have a map containing subthreads, keyed by an id (commandName_branchName).
         // This way a unique address is known and accessible for each possible branch.
         const FString message = commandMatcher.GetCaptureGroup(2);
-        FParsedCommand cmd = FParsedCommand("choice", speaker, message);
+
+        
+        FParsedCommand cmd = FParsedCommand("choice", FString::Format(TEXT("{0} {1}"), {speaker, message}));
         return ParseChoiceSubThread(storyAsset, outerThread, lines, lineNum+1, cmd);
     }
     return lineNum;

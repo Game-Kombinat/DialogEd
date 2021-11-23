@@ -3,17 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DataContextContainer.h"
 #include "GameDataContext.h"
-#include "StoryAsset.h"
 #include "StoryThread.h"
 #include "Components/ActorComponent.h"
 #include "StoryRunner.generated.h"
 
+class UDialogueActor;
 /**
  * Runs a StoryThread until its done.
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class DIALOGED_API UStoryRunner : public UActorComponent {
+class DIALOGED_API UStoryRunner : public UActorComponent, public IDataContextContainer {
     GENERATED_BODY()
 
     // UPROPERTY(Transient)
@@ -63,6 +64,9 @@ protected:
 public:
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+    UFUNCTION()
+    virtual UGameDataContext* GetDataContext() override; 
+
     UFUNCTION(BlueprintCallable)
     void StartNewStoryThread(UStoryThread* thread, APlayerController* controller);
 
@@ -76,4 +80,7 @@ public:
     void SetDataContext(UGameDataContext* dc) {
         dataContext = dc;
     }
+
+    UMessageManager* GetMessageManager() const;
+    UDialogueActor* GetDialogueActor(const FString& nameOrTag) const;
 };

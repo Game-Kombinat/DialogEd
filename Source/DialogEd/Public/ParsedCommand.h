@@ -21,38 +21,53 @@ struct FParsedCommand {
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString targetActor;
 
-    /** If this command required the targetActor to be resolved or not. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool requiresActor;
 
     /** List of arguments sans the actor name */
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString argumentList;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FString> argumentArray;
+
+    /** Arguments as string with the first word removed */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString trimmedArgumentList;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FDialogueBranchId> branches;
 
     /** This ID is required to create actually unique branch IDs */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     int parsingId;
+    
 
     FParsedCommand() {
         // just to signify that this is wrong.
         commandName = "unknown";
         targetActor = "none";
-        requiresActor = true;
         parsingId = -1;
     }
+    
+    FParsedCommand(const FString name, const FString args) : commandName(name), argumentList(args) {
+        parsingId = parsingIndex++;
+        args.ParseIntoArray(argumentArray, TEXT(" "));
 
-    FParsedCommand(const FString name, const FString actorName, const FString args) : commandName(name), targetActor(actorName), requiresActor(true), argumentList(args) {
-        parsingId = parsingIndex++;
-    }
-    FParsedCommand(const FString name, const FString args) : commandName(name), requiresActor(false), argumentList(args) {
-        parsingId = parsingIndex++;
+        if (argumentArray.Num() > 0) {
+            // If a command doesn't specify actor as first argument
+            // because it doesn't need it or expects it at a different spot, this will be wrong.
+            // But it's for convenience for commands that do it this way (the right way)
+            targetActor = argumentArray[0];
+            // There is probably a more elegant way to create a string with first word removed but eh.
+            // This is at editor time so whatever.
+            TArray<FString> tmp(argumentArray);
+            tmp.RemoveAt(0);
+            trimmedArgumentList = FString::Join(tmp, TEXT(" "));
+        }
+        
+        
     }
 
     int AddBranch(const FString branchTitle) {
-
         return branches.Add(FDialogueBranchId(
                 branchTitle,
                 FString::Format(TEXT("{0}_{1}_{2}"), {

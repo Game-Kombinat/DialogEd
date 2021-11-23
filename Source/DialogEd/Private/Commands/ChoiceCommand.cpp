@@ -4,31 +4,29 @@
 #include "Commands/ChoiceCommand.h"
 
 #include "Logging.h"
+#include "MessageManager.h"
+#include "StoryRunner.h"
+#include "Commands/RuntimeDialogueData.h"
 
 UChoiceCommand::UChoiceCommand() {
     choiceReceived = false;
     playerChoice = -1;
 }
 
-void UChoiceCommand::Execute(UDialogueActor* target, TArray<FString> strings) {
-    LOG_WARNING("Called Choice command with argument array. Using first element!");
-    
-    Execute(target, strings[0]);
-}
-
-void UChoiceCommand::Execute(UDialogueActor* target, FString arg) {
+void UChoiceCommand::Execute(TSharedRef<FParsedCommand> cmd) {
     choiceReceived = false;
     playerChoice = -1;
     
-    FRuntimeDialogueData d = FRuntimeDialogueData(target, arg);
-    d.SetBranches(branches);
+    FRuntimeDialogueData d = FRuntimeDialogueData(storyRunner->GetDialogueActor(cmd->targetActor), cmd->trimmedArgumentList);
+    
+    d.SetBranches(cmd->branches);
     //choiceCallback.BindUObject();
-    messageManager->Begin(d);
+    storyRunner->GetMessageManager()->Begin(d);
 }
 
 bool UChoiceCommand::IsFinished() {
     // return true when a choice from the player was received.
-    return messageManager->IsDone();
+    return storyRunner->GetMessageManager()->IsDone();
 }
 
 void UChoiceCommand::Cleanup() {
@@ -39,5 +37,5 @@ void UChoiceCommand::ReceiveChoice(int choice) {
     choiceReceived = true;
     playerChoice = choice;
     myThread->SetBranchingTarget(choice);
-    messageManager->Close();
+    storyRunner->GetMessageManager()->Close();
 }

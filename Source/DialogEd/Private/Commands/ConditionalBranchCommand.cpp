@@ -4,12 +4,14 @@
 #include "Commands/ConditionalBranchCommand.h"
 
 #include "Logging.h"
+#include "StoryRunner.h"
 
 UConditionalBranchCommand::UConditionalBranchCommand() {
 }
 
-void UConditionalBranchCommand::Execute(UDialogueActor* target, TArray<FString> strings) {
-    const auto dc = this->messageManager->GetDataContext();
+void UConditionalBranchCommand::Execute(TSharedRef<FParsedCommand> cmd) {
+    auto strings = cmd->argumentArray;
+    const auto dc = this->storyRunner->GetDataContext();
     FOperand lhs(strings[0], dc);
     FOperand rhs(strings[2], dc);
     const FString op = strings[1]; // this was sanitized while parsing
@@ -35,19 +37,12 @@ void UConditionalBranchCommand::Execute(UDialogueActor* target, TArray<FString> 
     }
 
     // account for the fact that we may not have an else branch as it is optional
-    if (!result && branches.Num() > 1) {
+    if (!result && cmd->branches.Num() > 1) {
         myThread->SetBranchingTarget(1);
     }
     else if (result) {
         myThread->SetBranchingTarget(0);
     }
-}
-
-void UConditionalBranchCommand::Execute(UDialogueActor* target, FString arg) {
-    LOG_WARNING("Called UConditionalBranchCommand::Execute with string argument but wanted list!");
-    TArray<FString> argList;
-    arg.ParseIntoArray(argList, TEXT(" "));
-    Super::Execute(target, argList);
 }
 
 bool UConditionalBranchCommand::IsFinished() {

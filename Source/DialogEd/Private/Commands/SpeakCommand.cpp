@@ -5,6 +5,7 @@
 
 #include "DialogueActor.h"
 #include "Logging.h"
+#include "StoryRunner.h"
 #include "Ui/MessagingWidget.h"
 
 
@@ -14,30 +15,23 @@ USpeakCommand::USpeakCommand() {
 USpeakCommand::~USpeakCommand() {
 }
 
-void USpeakCommand::Execute(UDialogueActor* target, TArray<FString> args) {
-    LOG_WARNING("Received message as string list!")
-    if (args.Num() > 0) {
-        Execute(target, args[0]);
-    }
-    else {
-        LOG_WARNING("Argument list in Speak command is empty.")
-    }
-}
 
-void USpeakCommand::Execute(UDialogueActor* target, FString arg) {
-    if (!messageManager) {
+void USpeakCommand::Execute(TSharedRef<FParsedCommand> cmd) {
+    if (!storyRunner) {
         LOG_ERROR("No MessageManager in Speak command.")
         return;
     }
-    messageManager->Begin(FRuntimeDialogueData(target, arg));
+    UDialogueActor* dactor = storyRunner->GetDialogueActor(cmd->targetActor);
+    myThread->AddActorInThread(dactor);
+    storyRunner->GetMessageManager()->Begin(FRuntimeDialogueData(dactor, cmd->trimmedArgumentList));
 }
 
 bool USpeakCommand::IsFinished() {
-    if (!messageManager) {
+    if (!storyRunner) {
         LOG_WARNING("No message manager in SpeakCommand::IsFinished!");
         return true;
     }
-    return messageManager->IsDone();
+    return storyRunner->GetMessageManager()->IsDone();
 }
 
 void USpeakCommand::Cleanup() {

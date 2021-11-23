@@ -38,8 +38,8 @@ protected:
     bool isPrimed;
     
 public:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    TArray<FString> actorsInThread;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient)
+    TArray<class UDialogueActor*> actorsInThread;
     
     UStoryThread();
     explicit UStoryThread(FString displayName);
@@ -76,6 +76,8 @@ public:
 
     /** Cleans up current command */
     void CleanupCommand();
+    void AddActorInThread(class UDialogueActor* actor);
+    void ClearActorsInThread();
     void SetBranchingTarget(int choice);
     FString GetBranchingTarget() const;
     UFUNCTION(BlueprintCallable)

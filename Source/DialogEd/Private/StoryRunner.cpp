@@ -7,6 +7,7 @@
 #include "DialogueCommandRegister.h"
 #include "Logging.h"
 #include "PreparedCommand.h"
+#include "StoryAsset.h"
 #include "StoryThread.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "GameFramework/Character.h"
@@ -49,9 +50,8 @@ void UStoryRunner::HandleActorsInThread() {
         return;
     }
     for (const auto a : currentThread->actorsInThread) {
-        auto resolvedActor = actorRegister->GetActorForTag(a);
-        if (resolvedActor) {
-            actorsInActiveThread.Add(resolvedActor);
+        if (a) {
+            actorsInActiveThread.Add(a);
         }
     }
     messageManager->SetRelevantActors(actorsInActiveThread);
@@ -104,46 +104,45 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
             return;
         }
         messageManager->SetStoryThread(currentThread);
-        const auto rawCmd = currentThread->GetNext();
-        UDialogueCommand* command = commandRegister->GetCommand(rawCmd.commandName);
+        const auto rawCmd = MakeShared<FParsedCommand>(currentThread->GetNext());
+        UDialogueCommand* command = commandRegister->GetCommand(rawCmd->commandName);
         if (!command) {
-            LOG_ERROR("Unmapped command: %s", *(rawCmd.commandName));
+            LOG_ERROR("Unmapped command: %s", *(rawCmd->commandName));
             SetComponentTickEnabled(false);
             return;
         }
-        UDialogueActor* diagActor = nullptr;
-        if (rawCmd.requiresActor) {
-            diagActor = actorRegister->GetActorForTag(rawCmd.targetActor);
-            if (!diagActor) {
-                LOG_ERROR("Unmapped actor name: %s", *(rawCmd.targetActor));
-                SetComponentTickEnabled(false);
-                return;
-            }
-        }
         
         // todo: would be better if that happens only once when instantiating the command first time
-        command->SetMessageManager(messageManager);
+        command->SetStoryRunner(this);
         command->SetWorld(GetWorld());
 
         command->SetPlayerController(instigatorController);
         command->SetStoryThread(currentThread);
-        command->SetBranches(rawCmd.branches);
         
-        FPreparedCommand currentCommand = FPreparedCommand(command, rawCmd, diagActor);
+        FPreparedCommand currentCommand = FPreparedCommand(command, rawCmd);
         // and execute it.
         if (currentThread->RunCommand(currentCommand)) {
-            LOG_INFO("Running new command: %s", *rawCmd.commandName);
+            LOG_INFO("Running new command: %s", *rawCmd->commandName);
         }
         else {
             // todo: be nice if we get some diagnostics here as to what exactly went sideways with Verify.
-            LOG_ERROR("Command did not verify: %s", *rawCmd.commandName);
+            LOG_ERROR("Command did not verify: %s", *rawCmd->commandName);
         }
     }
+}
+
+UGameDataContext* UStoryRunner::GetDataContext() {
+    return dataContext;
 }
 
 void UStoryRunner::StartNewStoryThread(UStoryThread* thread, APlayerController* controller) {
     if (threadStack.Num() != 0) {
         LOG_ERROR("Cannot start a new thread while one is already running.");
+        return;
+    }
+
+    if (!controller) {
+        LOG_ERROR("Controller is null when starting new story!");
         return;
     }
     
@@ -167,5 +166,13 @@ void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName, 
     if (thread) {
         StartNewStoryThread(thread, controller);
     }
+}
+
+UMessageManager* UStoryRunner::GetMessageManager() const {
+    return messageManager;
+}
+
+UDialogueActor* UStoryRunner::GetDialogueActor(const FString& nameOrTag) const {
+    return actorRegister->GetActorForTag(nameOrTag);
 }
 

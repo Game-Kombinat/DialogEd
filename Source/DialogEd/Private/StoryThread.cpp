@@ -3,6 +3,8 @@
 
 #include "StoryThread.h"
 
+#include "Logging.h"
+
 UStoryThread::UStoryThread() {
     threadName = "Unnamed Thread";
     threadPointer = 0;
@@ -15,13 +17,11 @@ UStoryThread::UStoryThread(FString displayName) {
     threadPointer = 0;
     isPrimed = false;
     currentCommand = FPreparedCommand();
+    storyAsset = nullptr;
 }
 
 void UStoryThread::AddCommand(const FParsedCommand command) {
     commandStack.Add(command);
-    if (command.requiresActor && !actorsInThread.Contains(command.targetActor)) {
-        actorsInThread.Add(command.targetActor);
-    }
 }
 
 bool UStoryThread::CanContinue() const {
@@ -48,6 +48,8 @@ FParsedCommand UStoryThread::GetCurrent() {
 void UStoryThread::ResetStoryThread() {
     threadPointer = 0;
     isPrimed = false;
+    ClearActorsInThread();
+    CleanupCommand();
 }
 
 FString UStoryThread::GetStoryThreadName() const {
@@ -80,14 +82,29 @@ void UStoryThread::CleanupCommand() {
     currentCommand.Cleanup();
 }
 
+void UStoryThread::AddActorInThread(UDialogueActor* actor) {
+    if (!actorsInThread.Contains(actor)) {
+        actorsInThread.Add(actor);
+    }
+}
+
+void UStoryThread::ClearActorsInThread() {
+    actorsInThread.Empty();
+}
+
 void UStoryThread::SetBranchingTarget(int choice) {
-    FParsedCommand current = GetCurrent();
-    auto selectedChoice = current.branches[choice];
-    nextBranchId = selectedChoice.branchId;
     // put the branching info here so runner can query if branching is required.
     // then put another thread onto its story thread stack that is executed.
     // when done thread is removed from stack.
     // when stack is empty, runner will close.
+    
+    FParsedCommand current = GetCurrent();
+    if (choice < 0 || choice >= current.branches.Num()) {
+        LOG_ERROR("Branching Target is out of range. Choice is %i - max range is 0 to %i", choice, current.branches.Num() - 1 );
+        return;
+    }
+    auto selectedChoice = current.branches[choice];
+    nextBranchId = selectedChoice.branchId;
 }
 
 FString UStoryThread::GetBranchingTarget() const {
