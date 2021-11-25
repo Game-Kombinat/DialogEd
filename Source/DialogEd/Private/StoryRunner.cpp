@@ -112,6 +112,10 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
             auto bt = currentThread->GetBranchingTarget();
             currentThread->BranchingConsumed();
             auto thread = storyAsset->GetSubThread(bt);
+            if (!thread) {
+                LOG_ERROR("Branching target %s is invalid in thread %s!", *bt, *storyAsset->GetName());
+                return;
+            }
             thread->ResetStoryThread();
             threadStack.Push(thread);
             LOG_INFO("branching into %s", *bt);
