@@ -3,7 +3,6 @@
 
 #include "Commands/ConditionalBranchCommand.h"
 
-#include "Logging.h"
 #include "StoryRunner.h"
 
 UConditionalBranchCommand::UConditionalBranchCommand() {
@@ -12,9 +11,15 @@ UConditionalBranchCommand::UConditionalBranchCommand() {
 void UConditionalBranchCommand::Execute(TSharedRef<FParsedCommand> cmd) {
     auto strings = cmd->argumentArray;
     const auto dc = this->storyRunner->GetDataContext();
-    FOperand lhs(strings[0], dc);
-    FOperand rhs(strings[2], dc);
-    const FString op = strings[1]; // this was sanitized while parsing
+    // todo: we could replace the interpretation of arguments bit with something
+    // more flexible like a pool of interpreters to allow for different kinds of branching contexts etc.
+    
+    // inputs were all sanitized when the data was parsed from text file.
+    // See FileParser class
+    FOperand lhs = MakeOperand(strings[0], dc);
+    FOperand rhs = MakeOperand(strings[2], dc);
+    const FString op = strings[1];
+    
     // we can't switch on strings and I don't want to do any further processing here so lets go.
     bool result = false;
     if (op.Equals("==")) {
@@ -51,4 +56,18 @@ bool UConditionalBranchCommand::IsFinished() {
 
 void UConditionalBranchCommand::Cleanup() {
     
+}
+
+FOperand UConditionalBranchCommand::MakeOperand(const FString& keyName, UGameDataContext* dc) const {
+    FString newKey;
+    // keys starting with __ are auto-keys that don't exist in the design-time data context model.
+    // They are local to each branch and are created dynamically on demand.
+    if (keyName.StartsWith("__")) {
+        newKey = FString::Format(TEXT("{0}{1}"), {myThread->GetStoryThreadName(), keyName});
+    }
+    else {
+        newKey = keyName;
+    }
+
+    return FOperand(newKey, dc);
 }

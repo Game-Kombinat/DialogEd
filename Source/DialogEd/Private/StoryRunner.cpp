@@ -69,6 +69,16 @@ void UStoryRunner::Observe(UObject* obj, ELatentActionChangeType changeType) {
     }
 }
 
+void UStoryRunner::CountRan(const UStoryThread* thread) const {
+    const FString ranKey = FString::Format(TEXT("{0}__ran"), {thread->GetStoryThreadName()});
+    int current = dataContext->GetValue(ranKey);
+    if (current < 0) {
+        current = 0;
+    }
+    
+    dataContext->ForceSetValue(ranKey, current + 1);
+}
+
 
 // Called every frame
 void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
@@ -92,6 +102,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     // if we have no thread or the current thread ended and the last command is finished
     if (!currentThread || (!currentThread->CanContinue() && !currentThread->IsRunning())) {
         LOG_INFO("Thread done. Removing %s", *currentThread->GetStoryThreadName())
+        CountRan(currentThread);
         threadStack.Pop();
         return;
     }

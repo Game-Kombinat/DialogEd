@@ -70,6 +70,7 @@ protected:
 
 public:
     void Observe(UObject* obj, ELatentActionChangeType changeType);
+    void CountRan(const UStoryThread* thread) const;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     UFUNCTION()

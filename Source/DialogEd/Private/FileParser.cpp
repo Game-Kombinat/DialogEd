@@ -199,7 +199,10 @@ int FileParser::ParseChoiceSubThread(UStoryAsset* story, UStoryThread* outerThre
     for (int i = lineNum; i < lines.Num(); ++i) {
         // this will have to break when a line starting with **** is found
         FString line = lines[i];
-        
+
+        if (IsComment(line) || line.TrimStartAndEnd().IsEmpty()) {
+            continue;
+        }
         if (EndsChoiceSegment(line)) {
             outerThread->AddCommand(branchingCommand);
             return i;
@@ -284,7 +287,9 @@ int FileParser::ParseConditionalSubThreads(UStoryAsset* story, UStoryThread* out
     for (int i = lineNum; i < lines.Num(); ++i) {
         // this will have to break when a line starting with **** is found
         FString line = lines[i];
-        
+        if (IsComment(line) || line.TrimStartAndEnd().IsEmpty()) {
+            continue;
+        }
         if (EndsCondition(line)) {
             outerThread->AddCommand(branchingCommand);
             return i;

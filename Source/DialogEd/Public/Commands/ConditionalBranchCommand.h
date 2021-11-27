@@ -53,8 +53,10 @@ public:
     // makes exactly 3 arguments, always.
     virtual int MinArguments() override { return 3; }
     virtual int MaxArguments() override { return 3; }
-    
+
     virtual void Execute(TSharedRef<FParsedCommand>) override;
     virtual bool IsFinished() override;
     virtual void Cleanup() override;
+private:
+    FOperand MakeOperand(const FString& keyName, UGameDataContext* dc) const;
 };
