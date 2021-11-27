@@ -49,7 +49,12 @@ void UStoryThread::ResetStoryThread() {
     threadPointer = 0;
     isPrimed = false;
     ClearActorsInThread();
-    CleanupCommand();
+    // another measure to fix the mysterious read access issues that happen very sporadically.
+    // The thought is that, if the command logic reference within is null, then this must be invalid.
+    // Hence we verify because this is doing the checks we need
+    if (currentCommand.Verify()) {
+        CleanupCommand();
+    }
 }
 
 FString UStoryThread::GetStoryThreadName() const {

@@ -22,6 +22,10 @@ void USpeakCommand::Execute(TSharedRef<FParsedCommand> cmd) {
         return;
     }
     UDialogueActor* dactor = storyRunner->GetDialogueActor(cmd->targetActor);
+    if (!dactor) {
+        LOG_ERROR("The target actor %s is missing from the actor map.", *cmd->targetActor);
+        return;
+    }
     myThread->AddActorInThread(dactor);
     storyRunner->GetMessageManager()->Begin(FRuntimeDialogueData(dactor, cmd->trimmedArgumentList));
 }

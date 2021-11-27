@@ -60,21 +60,21 @@ void FileParser::ParseInto(UStoryAsset* storyAsset, TArray<FString>& lines) {
         }
         // then check if this is an explicit command
         if (IsCommand(line)) {
-            LOG_INFO("Command: %s", *line);
+            // LOG_INFO("Command: %s", *line);
             currentThread->AddCommand(ParseWithCommand(line));
         }
         else if (BeginsChoiceSegment(line)) {
-            LOG_INFO("Choice: %s", *line);
+            // LOG_INFO("Choice: %s", *line);
             i = ParseChoiceCommand(storyAsset, currentThread, lines, i);
         }
         // nested if/else blocks boi!
         else if (BeginsCondition(line)) {
-            LOG_INFO("Condition: %s", *line);
+            // LOG_INFO("Condition: %s", *line);
             i = ParseCondition(storyAsset, currentThread, lines, i);
         }
         // for now, this is all we support
         else {
-            LOG_INFO("Speak: %s", *line);
+            // LOG_INFO("Speak: %s", *line);
             currentThread->AddCommand(ParseWithSpeakCommand(line));
         }
     }
@@ -278,6 +278,8 @@ int FileParser::ParseCondition(UStoryAsset* storyAsset, UStoryThread* outerThrea
 }
 
 int FileParser::ParseConditionalSubThreads(UStoryAsset* story, UStoryThread* outerThread, TArray<FString>& lines, int lineNum, FParsedCommand& branchingCommand, FString threadName) {
+    
+    threadName = branchingCommand.MakeThreadName(outerThread->GetStoryThreadName(), threadName);
     UStoryThread* currentThread = NewObject<UStoryThread>(story, UStoryThread::StaticClass(), FName(threadName));
     currentThread->SetThreadName(threadName);
     currentThread->SetStoryAsset(story);
@@ -306,23 +308,23 @@ int FileParser::ParseConditionalSubThreads(UStoryAsset* story, UStoryThread* out
 
         // then check if this is an explicit command
         if (IsCommand(line)) {
-            LOG_INFO("Condition->Command: %s", *line);
+            // LOG_INFO("Condition->Command: %s", *line);
             currentThread->AddCommand(ParseWithCommand(line));
         }
 
         // choices, ho boi!
         else if (BeginsChoiceSegment(line)) {
-            LOG_INFO("Condition->Choice: %s", *line);
+            // LOG_INFO("Condition->Choice: %s", *line);
             i = ParseChoiceCommand(story, currentThread, lines, i);
         }
         // nested if/else blocks boi!
         else if (BeginsCondition(line)) {
-            LOG_INFO("Condition->Nested Condition: %s", *line);
+            // LOG_INFO("Condition->Nested Condition: %s", *line);
             i = ParseCondition(story, currentThread, lines, i);
         }
         // for now, this is all we support
         else {
-            LOG_INFO("Condition->Speak: %s", *line);
+            // LOG_INFO("Condition->Speak: %s", *line);
             currentThread->AddCommand(ParseWithSpeakCommand(line));
         }
     }

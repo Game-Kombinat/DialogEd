@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "DialogueBranchId.h"
+#include "Logging.h"
 #include "ParsedCommand.generated.h"
 
 /**
@@ -68,6 +69,7 @@ struct FParsedCommand {
     }
 
     int AddBranch(const FString branchTitle) {
+        
         return branches.Add(FDialogueBranchId(
                 branchTitle,
                 FString::Format(TEXT("{0}_{1}_{2}"), {
@@ -92,6 +94,10 @@ struct FParsedCommand {
 
     int NumBranches() const {
         return branches.Num();
+    }
+
+    FString MakeThreadName(const FString& outerName, const FString& threadName) const {
+        return FString::Format(TEXT("({0})->{1}[{2}]->({3})"), { outerName, commandName, branches.Num(), threadName});
     }
 
     /** Call before parsing a new story file */
