@@ -18,7 +18,7 @@ FPreparedCommand::~FPreparedCommand() {
 }
 
 bool FPreparedCommand::HasValidSetup() const {
-    return logic != nullptr;
+    return IsValid(logic);
 }
 
 bool FPreparedCommand::Verify() const {
