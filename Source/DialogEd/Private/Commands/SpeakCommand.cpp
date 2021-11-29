@@ -28,6 +28,7 @@ void USpeakCommand::Execute(TSharedRef<FParsedCommand> cmd) {
     }
     myThread->AddActorInThread(dactor);
     storyRunner->GetMessageManager()->Begin(FRuntimeDialogueData(dactor, cmd->trimmedArgumentList));
+    storyRunner->GetMessageManager()->SetRelevantActors(myThread->actorsInThread);
 }
 
 bool USpeakCommand::IsFinished() {

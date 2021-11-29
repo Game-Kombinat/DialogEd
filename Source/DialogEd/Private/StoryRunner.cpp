@@ -94,14 +94,14 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
         if (onFinished.IsBound()) {
             onFinished.Broadcast();
         }
-        LOG_INFO("Thread ended. Suspending ticking StoryRunner.")
+        LOG_INFO("All threads done. Suspending StoryRunner.")
         return;
     }
     
     const auto currentThread = threadStack[threadStack.Num() - 1];
     // if we have no thread or the current thread ended and the last command is finished
     if (!currentThread || (!currentThread->CanContinue() && !currentThread->IsRunning())) {
-        LOG_INFO("Thread done. Removing %s", *currentThread->GetStoryThreadName())
+        LOG_INFO("Thread done: %s", *currentThread->GetStoryThreadName())
         CountRan(currentThread);
         threadStack.Pop();
         return;
@@ -111,7 +111,6 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
     // to draw the god damn messaging system so it has a size.
     // But it turned out to be a useful step for many things.
     if (currentThread && !currentThread->IsPrimed()) {
-        LOG_INFO("Priming thread %s", *currentThread->GetStoryThreadName());
         currentThread->Prime();
         HandleActorsInThread();
         return;
