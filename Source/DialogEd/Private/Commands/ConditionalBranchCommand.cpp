@@ -8,7 +8,7 @@
 UConditionalBranchCommand::UConditionalBranchCommand() {
 }
 
-void UConditionalBranchCommand::Execute(TSharedRef<FParsedCommand> cmd) {
+void UConditionalBranchCommand::Execute(TSharedPtr<FParsedCommand> cmd) {
     auto strings = cmd->argumentArray;
     const auto dc = this->storyRunner->GetDataContext();
     // todo: we could replace the interpretation of arguments bit with something

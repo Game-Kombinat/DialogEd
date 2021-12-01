@@ -10,11 +10,11 @@
  * or the wait queue and can be fired at will anytime now.
  */
 class DIALOGED_API FPreparedCommand {
-    class UDialogueCommand* logic;
-    TSharedRef<FParsedCommand> command;
+    TWeakObjectPtr<class UDialogueCommand> logic;
+    TSharedPtr<FParsedCommand> command;
 public:
     FPreparedCommand();
-    FPreparedCommand(UDialogueCommand* command, TSharedRef<FParsedCommand> rawCmd);
+    FPreparedCommand(TWeakObjectPtr<class UDialogueCommand> command, TSharedPtr<FParsedCommand> rawCmd);
     ~FPreparedCommand();
     bool HasValidSetup() const;
     bool Verify() const;

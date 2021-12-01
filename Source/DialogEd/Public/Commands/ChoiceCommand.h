@@ -22,7 +22,7 @@ public:
     virtual int MinArguments() override { return 1; }
     virtual int MaxArguments() override { return -1; }
     
-    virtual void Execute(TSharedRef<FParsedCommand>) override;
+    virtual void Execute(TSharedPtr<FParsedCommand>) override;
     virtual bool IsFinished() override;
     virtual void Cleanup() override;
     UFUNCTION()

@@ -14,7 +14,7 @@ USetVarCommand::USetVarCommand() {
 USetVarCommand::~USetVarCommand() {
 }
 
-void USetVarCommand::Execute(TSharedRef<FParsedCommand> cmd) {
+void USetVarCommand::Execute(TSharedPtr<FParsedCommand> cmd) {
     FString name = cmd->argumentArray[0];
     FString newKey;
     bool needForce = false;

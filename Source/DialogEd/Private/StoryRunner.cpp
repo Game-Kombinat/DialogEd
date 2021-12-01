@@ -132,7 +132,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
             return;
         }
         messageManager->SetStoryThread(currentThread);
-        const auto rawCmd = MakeShared<FParsedCommand>(currentThread->GetNext());
+        const TSharedPtr<FParsedCommand> rawCmd = MakeShareable<FParsedCommand>(new FParsedCommand(currentThread->GetNext()));
         UDialogueCommand* command = commandRegister->GetCommand(rawCmd->commandName);
         if (!command) {
             LOG_ERROR("Unmapped command: %s", *(rawCmd->commandName));
@@ -146,7 +146,7 @@ void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorCom
 
         command->SetPlayerController(instigatorController);
         command->SetStoryThread(currentThread);
-        
+
         FPreparedCommand currentCommand = FPreparedCommand(command, rawCmd);
         // and execute it.
         if (currentThread->RunCommand(currentCommand)) {
@@ -190,6 +190,10 @@ void UStoryRunner::StartNewStoryThread(UStoryThread* thread, APlayerController* 
 }
 
 void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName, APlayerController* controller) {
+    if (!asset) {
+        LOG_ERROR("No story asset given to run a thread from!");
+        return;
+    }
     UStoryThread* thread = asset->GetStoryThread(threadName);
     if (thread) {
         StartNewStoryThread(thread, controller);

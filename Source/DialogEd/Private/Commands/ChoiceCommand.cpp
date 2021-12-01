@@ -13,7 +13,7 @@ UChoiceCommand::UChoiceCommand() {
     playerChoice = -1;
 }
 
-void UChoiceCommand::Execute(TSharedRef<FParsedCommand> cmd) {
+void UChoiceCommand::Execute(TSharedPtr<FParsedCommand> cmd) {
     choiceReceived = false;
     playerChoice = -1;
     

@@ -6,37 +6,32 @@
 #include "DialogueActor.h"
 #include "DialogueCommand.h"
 
-FPreparedCommand::FPreparedCommand() : command(MakeShared<FParsedCommand>()) {
+FPreparedCommand::FPreparedCommand() {
     logic = nullptr;
+    command = nullptr;
 }
 
-FPreparedCommand::FPreparedCommand(UDialogueCommand* cmd, TSharedRef<FParsedCommand> rawCmd) : command(rawCmd) {
-    logic = cmd;
+FPreparedCommand::FPreparedCommand(TWeakObjectPtr<class UDialogueCommand> cmd, TSharedPtr<FParsedCommand> rawCmd) : logic(cmd), command(rawCmd) {
 }
 
 FPreparedCommand::~FPreparedCommand() {
 }
 
 bool FPreparedCommand::HasValidSetup() const {
-    return IsValid(logic);
+    return logic.IsValid() && command.IsValid();
+    // return IsValid(logic);
 }
 
 bool FPreparedCommand::Verify() const {
     if (!HasValidSetup()) {
         return false;
     }
-    // check target actor type being correct.
-    // const auto requiredClass = logic->TargetActorType();
-    // if (requiredClass && !targetActor->GetOwner()->IsA(requiredClass)) {
-    //     return false;
-    // }
 
-    // check arguments
     return (command->argumentArray.Num() >= logic->MinArguments() || logic->MinArguments() < 0) && (command->argumentArray.Num() <= logic->MaxArguments() || logic->MaxArguments() < 0);
 }
 
 bool FPreparedCommand::IsFinished() const {
-    if (!logic) {
+    if (!logic.IsValid()) {
         return true;
     }
     return logic->IsFinished();
@@ -47,8 +42,8 @@ void FPreparedCommand::Run() const {
 }
 
 void FPreparedCommand::Cleanup() {
-    if (logic) {
+    if (logic.IsValid()) {
         logic->Cleanup();
     }
-    logic = nullptr;
+    logic.Reset();
 }

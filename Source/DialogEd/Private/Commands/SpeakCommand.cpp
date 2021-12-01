@@ -16,7 +16,7 @@ USpeakCommand::~USpeakCommand() {
 }
 
 
-void USpeakCommand::Execute(TSharedRef<FParsedCommand> cmd) {
+void USpeakCommand::Execute(TSharedPtr<FParsedCommand> cmd) {
     if (!storyRunner) {
         LOG_ERROR("No MessageManager in Speak command.")
         return;

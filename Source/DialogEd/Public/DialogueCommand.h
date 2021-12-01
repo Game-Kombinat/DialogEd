@@ -44,7 +44,7 @@ public:
 
     void SetStoryThread(UStoryThread* storyThread);
 
-    virtual void Execute(TSharedRef<FParsedCommand> cmd) PURE_VIRTUAL(UDialogueCommand::Execute);
+    virtual void Execute(TSharedPtr<FParsedCommand> cmd) PURE_VIRTUAL(UDialogueCommand::Execute);
 
     /**
      * Return true, when this command is done executing.

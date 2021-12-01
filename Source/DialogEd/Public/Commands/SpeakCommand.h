@@ -19,7 +19,7 @@ public:
     virtual int MinArguments() override { return 2; } //  at least the speaker and one word
     virtual int MaxArguments() override { return -1; } //  we can have an unspecified amount of words.
     
-    virtual void Execute(TSharedRef<FParsedCommand> cmd) override;
+    virtual void Execute(TSharedPtr<FParsedCommand> cmd) override;
     virtual bool IsFinished() override;
     virtual void Cleanup() override;
 

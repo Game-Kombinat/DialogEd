@@ -3,6 +3,7 @@
 
 #include "StoryRunnerHelper.h"
 
+#include "Logging.h"
 #include "StoryRunner.h"
 
 UStoryRunnerHelper* UStoryRunnerHelper::StartStory(UStoryRunner* runner, UStoryAsset* asset, FString threadName, APlayerController* controller) {
@@ -30,6 +31,10 @@ UStoryRunnerHelper* UStoryRunnerHelper::StartStory(UStoryRunner* runner, UStoryA
 
 void UStoryRunnerHelper::Prepare(UStoryRunner* runner, UStoryAsset* asset, FString threadName, APlayerController* controller) {
     storyRunner = runner;
+    if (!runner) {
+        LOG_ERROR("No runner to run a story");
+        return;
+    }
     storyRunner->StartThreadFromAsset(asset, threadName, controller);
     storyRunner->onFinished.AddDynamic(this, &UStoryRunnerHelper::OnStoryFinished);
 }
