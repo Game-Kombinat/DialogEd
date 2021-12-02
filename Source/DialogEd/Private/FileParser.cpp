@@ -263,7 +263,7 @@ int FileParser::ParseCondition(UStoryAsset* storyAsset, UStoryThread* outerThrea
     FString headerLine = lines[lineNum];
     // ? if NameOrNumber >= OtherNameOrNumber
     // we match pieces here to do some sanitizing of the input in case someone derped on whitespaces and whatnot
-    const FRegexPattern commandPattern(TEXT("\\?\\W*if\\W*(\\w+)\\W*(<|>|==|>=|<=|!=)\\W*(\\w+)"));
+    const FRegexPattern commandPattern(TEXT("\\?\\W*if\\W*([\\w:._-]+)\\W*(==|>=|<=|!=|<|>)\\W*(\\w+)"));
     FRegexMatcher commandMatcher(commandPattern, *headerLine);
     if (commandMatcher.FindNext()) {
         const FString lhs = commandMatcher.GetCaptureGroup(1).TrimStartAndEnd();
