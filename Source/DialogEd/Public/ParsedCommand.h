@@ -97,7 +97,8 @@ struct FParsedCommand {
     }
 
     FString MakeThreadName(const FString& outerName, const FString& threadName) const {
-        return FString::Format(TEXT("({0})->{1}[{2}]->({3})"), { outerName, commandName, branches.Num(), threadName});
+        //return FString::Format(TEXT("({0})->{1}[{2}]->({3})"), { outerName, commandName, branches.Num(), threadName});
+        return FString::Format(TEXT("{0}_{1}"), {parsingIndex, threadName.TrimStartAndEnd()});
     }
 
     /** Call before parsing a new story file */

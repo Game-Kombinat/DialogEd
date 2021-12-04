@@ -147,7 +147,8 @@ UStoryThread* FileParser::ParseThreadHeader(const FString& line, UStoryAsset* st
     const FRegexPattern commandPattern(TEXT(">>>>\\s*(.*)"));
     FRegexMatcher commandMatcher(commandPattern, *line);
     if (commandMatcher.FindNext()) {
-        const FString threadName = commandMatcher.GetCaptureGroup(1);
+        const FString threadName = commandMatcher.GetCaptureGroup(1)
+            .TrimStartAndEnd().Replace(TEXT(" "), TEXT("_")).Replace(TEXT(":"), TEXT("_"));
         const auto t = NewObject<UStoryThread>(storyAsset, UStoryThread::StaticClass(), FName(threadName));
         t->SetThreadName(threadName);
         t->SetStoryAsset(storyAsset);
@@ -163,7 +164,10 @@ UStoryThread* FileParser::ParseChoiceHeader(const FString& line, UStoryAsset* st
     const FRegexPattern commandPattern(TEXT("--\\s*(.*)"));
     FRegexMatcher commandMatcher(commandPattern, *line);
     if (commandMatcher.FindNext()) {
-        const FString threadName = commandMatcher.GetCaptureGroup(1);
+        FString threadName = commandMatcher.GetCaptureGroup(1)
+            .TrimStartAndEnd().Replace(TEXT(" "), TEXT("_")).Replace(TEXT(":"), TEXT("_"));
+        // first argument is unused currently.
+        threadName = cmd.MakeThreadName(threadName, threadName);
         const auto t = NewObject<UStoryThread>(storyAsset, UStoryThread::StaticClass(), FName(threadName));
         t->SetThreadName(threadName);
         t->SetStoryAsset(storyAsset);
@@ -278,8 +282,9 @@ int FileParser::ParseCondition(UStoryAsset* storyAsset, UStoryThread* outerThrea
 }
 
 int FileParser::ParseConditionalSubThreads(UStoryAsset* story, UStoryThread* outerThread, TArray<FString>& lines, int lineNum, FParsedCommand& branchingCommand, FString threadName) {
-    
-    threadName = branchingCommand.MakeThreadName(outerThread->GetStoryThreadName(), threadName);
+    threadName = threadName
+        .TrimStartAndEnd().Replace(TEXT(" "), TEXT("_")).Replace(TEXT(":"), TEXT("_"));
+    threadName = branchingCommand.MakeThreadName(outerThread->GetName(), threadName);
     UStoryThread* currentThread = NewObject<UStoryThread>(story, UStoryThread::StaticClass(), FName(threadName));
     currentThread->SetThreadName(threadName);
     currentThread->SetStoryAsset(story);
