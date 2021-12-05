@@ -22,11 +22,11 @@ protected:
     TMap<FString, UStoryThread*> subThreads;
 
 public:
-#if WITH_EDITOR
+// #if WITH_EDITOR
     UPROPERTY()
-    UAssetImportData* assetImportData;
+    class UAssetImportData* assetImportData;
     virtual void PostInitProperties() override;
-#endif
+// #endif
     
     void AddStoryThread(UStoryThread* storyThread);
     UStoryThread* GetStoryThread(const FString& storyThreadName);

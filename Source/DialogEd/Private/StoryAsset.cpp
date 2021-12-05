@@ -2,11 +2,11 @@
 
 
 #include "StoryAsset.h"
-#if WITH_EDITOR
+// #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"
-#endif
+// #endif
 
-#if WITH_EDITOR
+// #if WITH_EDITOR
 void UStoryAsset::PostInitProperties() {
     UObject::PostInitProperties();
     if (!HasAnyFlags(RF_ClassDefaultObject))
@@ -14,7 +14,7 @@ void UStoryAsset::PostInitProperties() {
         assetImportData = NewObject<UAssetImportData>(this, TEXT("AssetImportData"));
     }
 }
-#endif
+// #endif
 
 void UStoryAsset::AddStoryThread(UStoryThread* storyThread) {
     threads.Add(storyThread);
