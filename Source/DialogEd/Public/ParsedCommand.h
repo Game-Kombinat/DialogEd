@@ -68,10 +68,10 @@ struct FParsedCommand {
         
     }
 
-    int AddBranch(const FString branchTitle) {
+    int AddBranch(const FString& displayTitle, const FString branchTitle) {
         
         return branches.Add(FDialogueBranchId(
-                branchTitle,
+                displayTitle,
                 FString::Format(TEXT("{0}_{1}_{2}"), {
                         parsingId,
                         commandName,

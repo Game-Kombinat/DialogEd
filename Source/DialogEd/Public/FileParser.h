@@ -45,6 +45,7 @@ private:
     static bool BeginsElse(const FString& line);
     static int ParseCondition(UStoryAsset* storyAsset, UStoryThread* outerThread, TArray<FString> lines, int lineNum);
     static int ParseConditionalSubThreads(UStoryAsset* story, UStoryThread* outerThread, TArray<FString>& lines, int lineNum, FParsedCommand& branchingCommand, FString threadName);
+    static FString SanitizeFileName(const FString fileName);
     // --- if/else
     
     

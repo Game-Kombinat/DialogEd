@@ -147,10 +147,10 @@ UStoryThread* FileParser::ParseThreadHeader(const FString& line, UStoryAsset* st
     const FRegexPattern commandPattern(TEXT(">>>>\\s*(.*)"));
     FRegexMatcher commandMatcher(commandPattern, *line);
     if (commandMatcher.FindNext()) {
-        const FString threadName = commandMatcher.GetCaptureGroup(1)
-            .TrimStartAndEnd().Replace(TEXT(" "), TEXT("_")).Replace(TEXT(":"), TEXT("_"));
-        const auto t = NewObject<UStoryThread>(storyAsset, UStoryThread::StaticClass(), FName(threadName));
-        t->SetThreadName(threadName);
+        const FString addressableName = commandMatcher.GetCaptureGroup(1);
+        const FString fileName = SanitizeFileName(addressableName);
+        const auto t = NewObject<UStoryThread>(storyAsset, UStoryThread::StaticClass(), FName(fileName));
+        t->SetThreadName(addressableName); // can't sanitize this because this is the name we address when starting a thread
         t->SetStoryAsset(storyAsset);
         storyAsset->AddStoryThread(t);
         return t;
@@ -164,14 +164,18 @@ UStoryThread* FileParser::ParseChoiceHeader(const FString& line, UStoryAsset* st
     const FRegexPattern commandPattern(TEXT("--\\s*(.*)"));
     FRegexMatcher commandMatcher(commandPattern, *line);
     if (commandMatcher.FindNext()) {
-        FString threadName = commandMatcher.GetCaptureGroup(1)
-            .TrimStartAndEnd().Replace(TEXT(" "), TEXT("_")).Replace(TEXT(":"), TEXT("_"));
+        // The actual threadName property in a thread is used for nothing
+        // but diagnostics and display purposes.
+        // So we keep the original. But we have to fiddle with it for file name and branch name.
+        // They must be unique and must not contain any unreal-uneasy characters.
+        FString originalThread = commandMatcher.GetCaptureGroup(1);
+        FString fileName = SanitizeFileName(originalThread);
         // first argument is unused currently.
-        threadName = cmd.MakeThreadName(threadName, threadName);
-        const auto t = NewObject<UStoryThread>(storyAsset, UStoryThread::StaticClass(), FName(threadName));
-        t->SetThreadName(threadName);
+        fileName = cmd.MakeThreadName(fileName, fileName);
+        const auto t = NewObject<UStoryThread>(storyAsset, UStoryThread::StaticClass(), FName(fileName));
+        t->SetThreadName(originalThread); // For display and diagnostics
         t->SetStoryAsset(storyAsset);
-        int idx = cmd.AddBranch(threadName);
+        int idx = cmd.AddBranch(originalThread, fileName); // For addressing / finding this sub thread
         storyAsset->AddSubThread(cmd.GetBranchId(idx), t);
         return t;
     }
@@ -282,13 +286,13 @@ int FileParser::ParseCondition(UStoryAsset* storyAsset, UStoryThread* outerThrea
 }
 
 int FileParser::ParseConditionalSubThreads(UStoryAsset* story, UStoryThread* outerThread, TArray<FString>& lines, int lineNum, FParsedCommand& branchingCommand, FString threadName) {
-    threadName = threadName
-        .TrimStartAndEnd().Replace(TEXT(" "), TEXT("_")).Replace(TEXT(":"), TEXT("_"));
+    const FString originalThreadName = threadName;
+    threadName = SanitizeFileName(threadName);
     threadName = branchingCommand.MakeThreadName(outerThread->GetName(), threadName);
     UStoryThread* currentThread = NewObject<UStoryThread>(story, UStoryThread::StaticClass(), FName(threadName));
     currentThread->SetThreadName(threadName);
     currentThread->SetStoryAsset(story);
-    int idx = branchingCommand.AddBranch(threadName);
+    int idx = branchingCommand.AddBranch(originalThreadName, threadName);
     story->AddSubThread(branchingCommand.GetBranchId(idx), currentThread);
     
     for (int i = lineNum; i < lines.Num(); ++i) {
@@ -336,6 +340,14 @@ int FileParser::ParseConditionalSubThreads(UStoryAsset* story, UStoryThread* out
     LOG_ERROR("There is an unterminated if/else thread segment starting on line %i", lineNum);
     // this whole thing is trash, this will cause the whole operation to end
     return lines.Num();
+}
+
+FString FileParser::SanitizeFileName(const FString fileName) {
+    return fileName.TrimStartAndEnd()
+        .Replace(TEXT(" "), TEXT("_"))
+        .Replace(TEXT(":"), TEXT("_"))
+        .Replace(TEXT("!"), TEXT("_"))
+        .Replace(TEXT("?"), TEXT("_"));
 }
 
 
