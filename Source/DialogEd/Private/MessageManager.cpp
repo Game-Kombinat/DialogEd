@@ -15,7 +15,7 @@ UMessageManager::~UMessageManager() {
 }
 
 void UMessageManager::SetMessagingWidget(UMessagingWidget* widget) {
-    LOG_INFO("Setting fresh messaging widget: %s", *widget->GetName())
+    // LOG_INFO("Setting fresh messaging widget: %s", *widget->GetName())
     messaging = widget;
 }
 

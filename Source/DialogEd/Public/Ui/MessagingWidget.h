@@ -47,4 +47,6 @@ public:
 
     void SetRelevantActors(TArray<UDialogueActor*> actors);
 
+    TArray<UDialogueActor*> GetRelevantActors() const { return relevantActors; };
+
 };
