@@ -5,10 +5,17 @@
 
 #include "Logging.h"
 #include "StoryRunner.h"
+#include "GameFramework/GameModeBase.h"
+#include "Kismet/GameplayStatics.h"
 
-UStoryRunnerHelper* UStoryRunnerHelper::StartStory(UStoryRunner* runner, UStoryAsset* asset, FString threadName, APlayerController* controller) {
-
-    auto obj = NewObject<UStoryRunnerHelper>();
+UStoryRunnerHelper* UStoryRunnerHelper::StartStory(UObject* worldContext, UStoryAsset* asset, FString threadName) {
+    UStoryRunner* runner = Cast<UStoryRunner>(worldContext->GetWorld()->GetAuthGameMode()->FindComponentByClass(UStoryRunner::StaticClass()));
+    if (!runner) {
+        LOG_ERROR("Could not find a story runner on the game mode. It needs to be on the game mode!");
+        return nullptr;
+    }
+    const auto controller = UGameplayStatics::GetPlayerController(worldContext, 0);
+    const auto obj = NewObject<UStoryRunnerHelper>();
     obj->Prepare(runner, asset, threadName, controller);
 
     return obj;

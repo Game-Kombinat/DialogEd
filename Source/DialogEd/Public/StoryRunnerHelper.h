@@ -21,8 +21,8 @@ protected:
     UPROPERTY()
     class UStoryRunner* storyRunner;
 
-    UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))
-    static UStoryRunnerHelper* StartStory(class UStoryRunner* runner, class UStoryAsset* asset, FString threadName, APlayerController* controller);
+    UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext="worldContext"))
+    static UStoryRunnerHelper* StartStory(UObject* worldContext, class UStoryAsset* asset, FString threadName);
 
     void Prepare(class UStoryRunner* runner, class UStoryAsset* asset, FString threadName, APlayerController* controller);
 
