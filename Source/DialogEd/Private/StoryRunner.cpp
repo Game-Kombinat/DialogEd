@@ -187,6 +187,10 @@ void UStoryRunner::StartNewStoryThread(UStoryThread* thread, APlayerController* 
     thread->ResetStoryThread();
     storyAsset = thread->GetStoryAsset();
     SetComponentTickEnabled(true);
+    
+    if (onStarted.IsBound()) {
+        onStarted.Broadcast();
+    }
 }
 
 void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName, APlayerController* controller) {

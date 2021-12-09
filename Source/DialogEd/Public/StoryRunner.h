@@ -12,6 +12,7 @@ class UStoryThread;
 class UDialogueActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStoryFinishedCallback);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStoryStartedCallback);
 /**
  * Runs a StoryThread until its done.
  */
@@ -56,6 +57,9 @@ protected:
 public:
     UPROPERTY(BlueprintAssignable)
     FStoryFinishedCallback onFinished;
+    
+    UPROPERTY(BlueprintAssignable)
+    FStoryStartedCallback onStarted;
     
     UPROPERTY()
     TArray<UDialogueActor*> actorsInActiveThread;
