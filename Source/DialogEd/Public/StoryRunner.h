@@ -93,10 +93,8 @@ public:
         dataContext = dc;
     }
 
+    UFUNCTION(BlueprintCallable)
     bool IsRunning() const;
-
-    // Stories are inherently latent, this provides an interface so we can chain the execution after story is finished.
-    
 
     UMessageManager* GetMessageManager() const;
     UDialogueActor* GetDialogueActor(const FString& nameOrTag) const;
