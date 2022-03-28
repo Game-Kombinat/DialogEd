@@ -31,7 +31,7 @@ FTokenizer::FTokenizer() {
     tokenDefinitions.Add(FToken(ETokenType::PlusPlus, "\\+\\+", 2));
     tokenDefinitions.Add(FToken(ETokenType::MinusMinus, "--", 2));
     tokenDefinitions.Add(FToken(ETokenType::Identifier, "[a-zA-Z_$][a-zA-Z_$0-9]+", 3));
-    tokenDefinitions.Add(FToken(ETokenType::NumberLiteral, "[0-9]+", 3));
+    tokenDefinitions.Add(FToken(ETokenType::NumberLiteral, "\\d+", 3));
     tokenDefinitions.Add(FToken(ETokenType::Text, "\"[^\"]*\"", 2));
 }
 
