@@ -50,6 +50,8 @@ public:
     DialogEd::FNode* RunThreadStatements(DialogEd::FNode* node);
 
     DialogEd::FNode* If();
+
+    DialogEd::FNode* Command();
     
     // Returns any of the valid top level nodes (if, branch, speak etc)
     DialogEd::FNode* Statement();

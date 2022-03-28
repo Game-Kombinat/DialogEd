@@ -3,6 +3,7 @@
 #include "Logging.h"
 #include "Tree/AssignmentNode.h"
 #include "Tree/BinOpNode.h"
+#include "Tree/CommandNode.h"
 #include "Tree/IdentifierNode.h"
 #include "Tree/NumberNode.h"
 #include "Tree/SpeakNode.h"
@@ -98,6 +99,7 @@ DialogEd::FNode* FDialogModel::LiteralOrIdentifier() {
 }
 
 DialogEd::FNode* FDialogModel::MathExpression() {
+    // todo: we could use parenthesis to force operator precedence some day
     DialogEd::FNode* lhs = LiteralOrIdentifier();
     if (!lhs) {
         // LiteralOrIdentifier already spat out error msg
@@ -134,6 +136,7 @@ DialogEd::FNode* FDialogModel::MathExpression() {
 }
 
 DialogEd::FNode* FDialogModel::LogicExpression() {
+    // todo: we could use parenthesis to force operator precedence some day
     DialogEd::FNode* lhs = MathExpression();
     if (!lhs) {
         // LiteralOrIdentifier already spat out error msg
@@ -244,6 +247,7 @@ DialogEd::FNode* FDialogModel::AssignmentOrText() {
         // account for successive assignments
         return Assignment();
     }
+    // todo: this can also be a post increment or post decrement
 
     LOG_ERROR("Syntax Error: Unexpected symbols. Got %s %s", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString(), *UEnum::GetDisplayValueAsText(nextToken.tokenType).ToString());
     Next(currentToken.tokenType);
@@ -321,6 +325,34 @@ DialogEd::FNode* FDialogModel::If() {
     return ifNode;
 }
 
+DialogEd::FNode* FDialogModel::Command() {
+    Next(ETokenType::Command);
+    // now we get identifier, lparen [identifier identifier ...], rparen
+    const auto cmdName = static_cast<DialogEd::FIdentifierNode*>(Identifier());
+    const auto cmd = new DialogEd::FCommandNode();
+    cmd->commandName = cmdName->identifierLabel;
+    cmd->token = cmdName->token;
+    
+    Next(ETokenType::LParen);
+    bool failed = false;
+    while (currentToken.tokenType != ETokenType::RParen) {
+        auto id = static_cast<DialogEd::FIdentifierNode*>(Identifier());
+        if (!id) {
+            failed = true;
+            break;
+        }
+        cmd->argumentList.Add(id); // we have to add the nodes, not as part of the tree but for their type information etc.
+    }
+    if (failed) {
+        delete cmd;
+        return nullptr;
+    }
+    
+    Next(ETokenType::RParen);
+    
+    return cmd;
+}
+
 DialogEd::FNode* FDialogModel::Statement() {
     // at this point, the only valid tokens are:
     // * Identifier
@@ -336,7 +368,7 @@ DialogEd::FNode* FDialogModel::Statement() {
         case ETokenType::If:
             return If();
         case ETokenType::Command:
-            break;
+            return Command();
         case ETokenType::BeginBranching:
             break;
         case ETokenType::PlusPlus:
