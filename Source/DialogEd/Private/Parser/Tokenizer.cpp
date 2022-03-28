@@ -19,7 +19,7 @@ FTokenizer::FTokenizer() {
     tokenDefinitions.Add(FToken(ETokenType::Or, "\\|\\|"));
     tokenDefinitions.Add(FToken(ETokenType::Greater, ">"));
     tokenDefinitions.Add(FToken(ETokenType::Less, "<"));
-    tokenDefinitions.Add(FToken(ETokenType::Equal, "==", 3));
+    tokenDefinitions.Add(FToken(ETokenType::Equal, "==", 2));
     tokenDefinitions.Add(FToken(ETokenType::GreaterOrEqual, ">=", 3));
     tokenDefinitions.Add(FToken(ETokenType::LessOrEqual, "<=", 3));
     tokenDefinitions.Add(FToken(ETokenType::NotEqual, "!=", 3));
@@ -33,6 +33,8 @@ FTokenizer::FTokenizer() {
     tokenDefinitions.Add(FToken(ETokenType::Identifier, "[a-zA-Z_$][a-zA-Z_$0-9]+", 3));
     tokenDefinitions.Add(FToken(ETokenType::NumberLiteral, "\\d+", 3));
     tokenDefinitions.Add(FToken(ETokenType::Text, "\"[^\"]*\"", 2));
+    tokenDefinitions.Add(FToken(ETokenType::LParen, "\\(", 2));
+    tokenDefinitions.Add(FToken(ETokenType::RParen, "\\)", 2));
 }
 
 TArray<FParsedToken> FTokenizer::Tokenize(const FString input) {

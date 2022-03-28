@@ -42,6 +42,8 @@ enum class ETokenType : uint8 {
     Whitespace, // we match for whitespace because it has no meaning in its own and can only be part of some other token or get discarded.
     
     Text, // anything between two "
+    LParen,
+    RParen
     
 };
 
