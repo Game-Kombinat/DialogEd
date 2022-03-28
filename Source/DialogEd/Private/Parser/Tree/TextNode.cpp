@@ -1,6 +1,6 @@
 ﻿#include "TextNode.h"
 
-DialogEd::FTextNode::FTextNode(FParsedToken t) {
+DialogEd::FTextNode::FTextNode(FParsedToken t, FString inValue) {
     token = t;
-    value = t.value.TrimChar('"');
+    value = inValue;
 }

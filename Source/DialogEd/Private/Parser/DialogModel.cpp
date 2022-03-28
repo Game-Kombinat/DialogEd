@@ -187,9 +187,17 @@ DialogEd::FNode* FDialogModel::Text() {
         Next(currentToken.tokenType);
         return nullptr;
     }
-    const auto dt = new DialogEd::FTextNode(currentToken);
+    FString inValue = currentToken.value.TrimChar('"');
+    const FParsedToken textBaseToken = currentToken;
     Next(currentToken.tokenType);
-    return new DialogEd::FSpeakNode(idNode, dt);
+    // thing is, it is syntactically allowed to have another text token here that is supposed to be merged with the previous one.
+    while (currentToken.tokenType == ETokenType::Text) {
+        FString newLine = FString("\n").Append(currentToken.value.TrimChar('"'));
+        inValue.Append(newLine);
+        Next(currentToken.tokenType);
+    }
+    
+    return new DialogEd::FSpeakNode(idNode, new DialogEd::FTextNode(textBaseToken, inValue));
 }
 
 DialogEd::FNode* FDialogModel::Assignment() {

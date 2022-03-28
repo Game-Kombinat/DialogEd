@@ -5,7 +5,7 @@ namespace DialogEd {
     class FTextNode : public FNode {
     public:
         FString value;
-        explicit FTextNode(FParsedToken t);
+        explicit FTextNode(FParsedToken t, FString inValue);
     };
 }
 
