@@ -3,11 +3,16 @@
 #include "Logging.h"
 #include "Tree/AssignmentNode.h"
 #include "Tree/BinOpNode.h"
+#include "Tree/ChoiceNode.h"
 #include "Tree/CommandNode.h"
 #include "Tree/IdentifierNode.h"
 #include "Tree/NumberNode.h"
 #include "Tree/SpeakNode.h"
 #include "Tree/TextNode.h"
+
+FDialogModel::FDialogModel(const TArray<FParsedToken> tokens) {
+    this->tokenStack = tokens;
+}
 
 void FDialogModel::Make() {
     // manually create starting situation for the token look-around
@@ -25,7 +30,7 @@ void FDialogModel::Make() {
             root = BeginThread();
             node = root;
         }
-        node = RunThreadStatements(node);
+        node = RunThreadStatement(node);
         if (!node) {
             break;
         }
@@ -57,7 +62,7 @@ void FDialogModel::Next(ETokenType consume) {
 
 DialogEd::FNode* FDialogModel::BeginThread() {
     Next(ETokenType::OpenStory);
-    return new DialogEd::FThreadNode();
+    return new DialogEd::FNode();
 }
 
 DialogEd::FNode* FDialogModel::Identifier() {
@@ -254,7 +259,7 @@ DialogEd::FNode* FDialogModel::AssignmentOrText() {
     return nullptr;
 }
 
-DialogEd::FNode* FDialogModel::RunThreadStatements(DialogEd::FNode* node) {
+DialogEd::FNode* FDialogModel::RunThreadStatement(DialogEd::FNode* node) {
     node->left = Statement();
     if (!node->left || node->left->token.tokenType == ETokenType::Invalid) {
         // todo: should analyse the tokens here and see with which one it went derp.
@@ -262,7 +267,7 @@ DialogEd::FNode* FDialogModel::RunThreadStatements(DialogEd::FNode* node) {
         delete node;
         return nullptr;
     }
-    node->right = new DialogEd::FThreadNode();
+    node->right = new DialogEd::FNode();
     node = node->right;
     return node;
 }
@@ -275,7 +280,7 @@ DialogEd::FNode* FDialogModel::If() {
      */
     const auto ifNode = new DialogEd::FNode();
     ifNode->token = currentToken;
-    Next(currentToken.tokenType);
+    Next(ETokenType::If);
     // we're now at the spot after the if, which can only be a logic expression
     const auto expression = LogicExpression();
     if (!expression) {
@@ -284,7 +289,7 @@ DialogEd::FNode* FDialogModel::If() {
         return nullptr;
     }
     ifNode->left = expression;
-    DialogEd::FNode* node = new DialogEd::FThreadNode();
+    DialogEd::FNode* node = new DialogEd::FNode();
     DialogEd::FNode* ifBranches = new DialogEd::FNode();
     ifBranches->left = node; // this is going to be the true-branch and right is the false branch
     ifNode->right = ifBranches;
@@ -294,7 +299,7 @@ DialogEd::FNode* FDialogModel::If() {
     // now we have to assemble the if branch until we hit either else or endif
     // run the true-branchNext(currentToken.tokenType);
     while (currentToken.tokenType != ETokenType::Else || currentToken.tokenType != ETokenType::Endif) {
-        node = RunThreadStatements(node);
+        node = RunThreadStatement(node);
         if (!node) {
             failed = true;
             break;
@@ -307,10 +312,10 @@ DialogEd::FNode* FDialogModel::If() {
     // run the else branch if it exists
     if (currentToken.tokenType == ETokenType::Else) {
         Next(ETokenType::Else);
-        node = new DialogEd::FThreadNode();
+        node = new DialogEd::FNode();
         ifBranches->right = node;
         while (currentToken.tokenType != ETokenType::Endif) {
-            node = RunThreadStatements(node);
+            node = RunThreadStatement(node);
             if (!node) {
                 failed = true;
                 break;
@@ -353,6 +358,54 @@ DialogEd::FNode* FDialogModel::Command() {
     return cmd;
 }
 
+DialogEd::FNode* FDialogModel::ChoiceBranches() {
+
+    /*
+     * branch node: left: speak node,
+     *              right:
+     *                  FChoiceNode:    left:   Next choice
+     *                                  right:  This choice branch
+     *                                  label: choice label
+     *      
+     */
+    const auto branchBase = new DialogEd::FNode();
+    branchBase->token = currentToken;
+    Next(ETokenType::BeginBranching);
+    // we're now at the spot after the **** token and expect now a speaker and text to speak.
+    const auto speech = Text();
+    if (!speech) {
+        // ... and if it ain't, this is an epic fail
+        delete branchBase;
+        return nullptr;
+    }
+    branchBase->left = speech;
+    DialogEd::FChoiceNode* node = new DialogEd::FChoiceNode();
+    branchBase->right = node;
+    while (currentToken.tokenType != ETokenType::EndBranching) {
+        Next(ETokenType::Branch); // =>
+        // now we're at the label node. Which is a Text token
+        node->SetTokenAndLabel(currentToken);
+        Next(ETokenType::Text);
+        auto threadNode = new DialogEd::FNode();
+        node->right = threadNode;
+        while (currentToken.tokenType != ETokenType::Branch || currentToken.tokenType != ETokenType::EndBranching) {
+            // run until we hit the next branch or the end of the branching
+            threadNode = RunThreadStatement(threadNode);
+        }
+        // now we oughta be at the branch
+        
+        // if we have a next branch, swap the node pointer
+        if (currentToken.tokenType == ETokenType::Branch) {
+            // if so, next next branch node and cycle the current node out.
+            DialogEd::FChoiceNode* nextChoice = new DialogEd::FChoiceNode();
+            node->left = nextChoice;
+            node = nextChoice;
+        }
+    }
+    
+    return branchBase;
+}
+
 DialogEd::FNode* FDialogModel::Statement() {
     // at this point, the only valid tokens are:
     // * Identifier
@@ -370,11 +423,12 @@ DialogEd::FNode* FDialogModel::Statement() {
         case ETokenType::Command:
             return Command();
         case ETokenType::BeginBranching:
-            break;
-        case ETokenType::PlusPlus:
-            break;
-        case ETokenType::MinusMinus:
-            break;
+            return ChoiceBranches();
+        // todo: I'll keep this for implementing later.
+        // case ETokenType::PlusPlus:
+        //     break;
+        // case ETokenType::MinusMinus:
+        //     break;
         default:
             const FString enumType = UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString();
             LOG_ERROR("Invalid %s found. Check Syntax near '%s'", *enumType, *currentToken.value);

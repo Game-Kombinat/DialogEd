@@ -1,8 +1,10 @@
 ﻿#pragma once
-#include "Tree/ThreadNode.h"
+#include "ParsedToken.h"
 
 namespace DialogEd {
     class FIdentifierNode;
+    class FNode;
+    
 }
 
 class FDialogModel {
@@ -13,7 +15,7 @@ protected:
     FParsedToken currentToken;
     FParsedToken nextToken;
 public:
-    FDialogModel(TArray<FParsedToken>);
+    explicit FDialogModel(const TArray<FParsedToken> tokens);
 
     // Begins the process of generating the ast
     void Make();
@@ -23,15 +25,6 @@ public:
     
     // Start a new thread. everything else must be within a thread
     DialogEd::FNode* BeginThread();
-
-    // a mathematical operation with 2 operands.
-    DialogEd::FNode* BinaryOperation();
-
-    // Choice Node containing one child to the right, the first branch
-    DialogEd::FNode* BeginChoices();
-
-    // Branch node containing next branch of choice to the right and branch content to the left
-    DialogEd::FNode* Branch();
 
     // Begins construction of node tree based on an Identifier
     DialogEd::FNode* Identifier();
@@ -47,11 +40,13 @@ public:
 
     // returns terminal node after full assignment or text expressions
     DialogEd::FNode* AssignmentOrText();
-    DialogEd::FNode* RunThreadStatements(DialogEd::FNode* node);
+    DialogEd::FNode* RunThreadStatement(DialogEd::FNode* node);
 
     DialogEd::FNode* If();
 
     DialogEd::FNode* Command();
+
+    DialogEd::FNode* ChoiceBranches();
     
     // Returns any of the valid top level nodes (if, branch, speak etc)
     DialogEd::FNode* Statement();
