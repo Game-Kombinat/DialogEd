@@ -20,7 +20,7 @@ namespace DialogEd {
     class FBinOpNode : public FNode {
     public:
         EOperatorType opType;
-        FBinOpNode(FParsedToken token, FNode* left, FNode* right);
+        FBinOpNode(FParsedToken t, FNode* left, FNode* right);
     };
 }
 

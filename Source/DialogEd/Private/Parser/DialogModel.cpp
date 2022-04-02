@@ -11,7 +11,14 @@
 #include "Tree/TextNode.h"
 
 FDialogModel::FDialogModel(const TArray<FParsedToken> tokens) {
-    this->tokenStack = tokens;
+    tokenStack = tokens;
+    Algo::Reverse(tokenStack);
+}
+
+FDialogModel::~FDialogModel() {
+    for (auto i : threads) {
+        delete i;
+    }
 }
 
 void FDialogModel::Make() {
@@ -27,9 +34,15 @@ void FDialogModel::Make() {
         // and we have to housekeep some pointers.
         if (currentToken.tokenType == ETokenType::CloseStory) {
             threads.Add(root);
+            Next(ETokenType::CloseStory);
+            if (currentToken.tokenType == ETokenType::Invalid) {
+                // we have reached the end of this input file
+                break;
+            }
             root = BeginThread();
             node = root;
         }
+        
         node = RunThreadStatement(node);
         if (!node) {
             break;
@@ -37,9 +50,134 @@ void FDialogModel::Make() {
     }
 }
 
+FString FDialogModel::ToString() {
+    FString buffer;
+    for (int i = 0; i < threads.Num(); ++i) {
+        buffer.Append(threads[i]->ToString());
+        buffer.Append("\n");
+    }
+
+    return buffer;
+}
+
+void FDialogModel::TreeToString(DialogEd::FNode* root, FString& buffer) {
+    struct ListOfLines {
+        TArray<FString> list;
+    };
+    TArray<ListOfLines> lines;
+    TArray<DialogEd::FNode*> level;
+    TArray<DialogEd::FNode*> next;
+    level.Add(root);
+    int nn = 1;
+    int widest = 0;
+    // collect the display data from the tree.
+    while (nn != 0) {
+        ListOfLines line;
+        nn = 0;
+        // auto node : level
+        for (int i = 0; i < level.Num(); ++i) {
+            auto node = level[i];
+            if (!node) {
+                line.list.Add(FString());
+                next.Add(nullptr);
+                next.Add(nullptr);
+            }
+            else {
+                FString display = UEnum::GetDisplayValueAsText(node->token.tokenType).ToString();
+                line.list.Add(display);
+                if (display.Len() > widest) {
+                    widest = display.Len();
+                }
+                next.Add(node->left);
+                next.Add(node->right);
+                if (node->left) {
+                    nn++;
+                }
+                if (node->right) {
+                    nn++;
+                }
+            }
+        }
+
+        if (widest % 2 == 1) {
+            widest++;
+        }
+        lines.Add(line);
+        auto tmp = level;
+        level = next;
+        next = tmp;
+        next.Reset();
+    }
+
+    // print it.
+    int perPiece = lines.Last().list.Num() * (widest + 4);
+
+    for (int i = 0; i < lines.Num(); ++i) {
+        TArray<FString> line = lines[i].list;
+        int hpw = FMath::FloorToInt(perPiece / 2.0f) - 1;
+
+        if (i > 0) {
+            for (int j = 0; j < line.Num(); ++j) {
+                // split node
+                FString c = " ";
+                
+                if (j % 2 == 1) {
+                    if (!line[j - 1].IsEmpty()) {
+                        c = (!line[j].IsEmpty() ? "|" : "-|");
+                    }
+                    else {
+                        if (j < line.Num() && !line[j].IsEmpty()) {
+                            c = "|-";
+                        }
+                    }
+                }
+                buffer.Append(c);
+
+                // lines and spaces
+                if (line[j].IsEmpty()) {
+                    for (int k = 0; k < perPiece - 1; ++k) {
+                        buffer.Append(" ");
+                    }
+                }
+                else {
+                    //buffer.AppendChars()
+                    for (int k = 0; k < hpw; k++) {
+                        buffer.Append(j % 2 == 0 ? " " : "-");
+                    }
+                    buffer.Append(j % 2 == 0 ? "|-" : "-|");
+                    for (int k = 0; k < hpw; k++) {
+                        buffer.Append(j % 2 == 0 ? "-" : " ");
+                    }
+                }
+            }
+            buffer.Append("\n");
+        }
+        // print line of numbers
+        for (int j = 0; j < line.Num(); ++j) {
+
+            FString f = line[j];
+            
+            int gap1 = FMath::CeilToInt(perPiece / 2.0f - f.Len() / 2.0f);
+            int gap2 = FMath::FloorToInt(perPiece / 2.0f - f.Len() / 2.0f);
+
+            // a number
+            for (int k = 0; k < gap1; k++) {
+                buffer.Append(" ");
+            }
+            buffer.Append(f);
+            for (int k = 0; k < gap2; k++) {
+                buffer.Append(" ");
+            }
+        }
+        buffer.Append("\n");
+
+        perPiece /= 2;
+    }
+}
+
 void FDialogModel::Next(ETokenType consume) {
     if (currentToken.tokenType != consume) {
-        LOG_ERROR("Unexpected token! Found %s, expected %s", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString(), *UEnum::GetDisplayValueAsText(consume).ToString())
+        LOG_ERROR("Next: Unexpected token! Found %s, expected %s", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString(), *UEnum::GetDisplayValueAsText(consume).ToString())
         return;
     }
     lastToken = currentToken;
@@ -50,7 +188,7 @@ void FDialogModel::Next(ETokenType consume) {
     else {
         nextToken = FParsedToken(); // becomes invalid token
     }
-    
+
     // Ignore comments, of course
     if (currentToken.tokenType == ETokenType::Comment) {
         Next(ETokenType::Comment);
@@ -61,28 +199,31 @@ void FDialogModel::Next(ETokenType consume) {
 }
 
 DialogEd::FNode* FDialogModel::BeginThread() {
+    LOG_INFO("Opening new MainThread");
     Next(ETokenType::OpenStory);
     return new DialogEd::FNode();
 }
 
 DialogEd::FNode* FDialogModel::Identifier() {
-    
+
     DialogEd::FIdentifierNode* identifier = new DialogEd::FIdentifierNode(currentToken);
     DialogEd::FNode* node = identifier;
     // if next token it's a colon: this could be a variable type definition (i:inventoryItem).
     // or it could be a speaker name (john: "speak")
     if (nextToken.tokenType == ETokenType::Colon) {
         Next(ETokenType::Identifier); // now current is colon
-        
+
         Next(ETokenType::Colon); // and now current is the token after colon
         if (currentToken.tokenType == ETokenType::Identifier) {
             node = new DialogEd::FIdentifierNode(currentToken, identifier);
             Next(currentToken.tokenType);
         }
     }
+    else {
+        Next(ETokenType::Identifier);
+    }
     // otherwise this is some kind of binary operator or comparison operator or assignment.
     // either way, this will be evaluated at the callsite.
-    Next(currentToken.tokenType);
     return node;
 }
 
@@ -186,8 +327,7 @@ DialogEd::FNode* FDialogModel::LogicExpression() {
     return lhs;
 }
 
-DialogEd::FNode* FDialogModel::Text() {
-    DialogEd::FNode* lhsIdentifier = Identifier();
+DialogEd::FNode* FDialogModel::Text(DialogEd::FNode* lhsIdentifier) {
     const auto idNode = static_cast<DialogEd::FIdentifierNode*>(lhsIdentifier);
     if (!idNode) {
         LOG_ERROR("Syntax error: Expected Identifier before Text, got %s", *UEnum::GetDisplayValueAsText(lhsIdentifier->token.tokenType).ToString());
@@ -197,19 +337,18 @@ DialogEd::FNode* FDialogModel::Text() {
     }
     FString inValue = currentToken.value.TrimChar('"');
     const FParsedToken textBaseToken = currentToken;
-    Next(currentToken.tokenType);
+    Next(ETokenType::Text);
     // thing is, it is syntactically allowed to have another text token here that is supposed to be merged with the previous one.
     while (currentToken.tokenType == ETokenType::Text) {
         FString newLine = FString("\n").Append(currentToken.value.TrimChar('"'));
         inValue.Append(newLine);
-        Next(currentToken.tokenType);
+        Next(ETokenType::Text);
     }
-    
+
     return new DialogEd::FSpeakNode(idNode, new DialogEd::FTextNode(textBaseToken, inValue));
 }
 
-DialogEd::FNode* FDialogModel::Assignment() {
-    DialogEd::FNode* lhsIdentifier = Identifier();
+DialogEd::FNode* FDialogModel::Assignment(DialogEd::FNode* lhsIdentifier) {
     bool hadRun = false;
     while (currentToken.tokenType == ETokenType::SingleEqual && lhsIdentifier->token.tokenType == ETokenType::Identifier) {
         // assignment
@@ -217,7 +356,7 @@ DialogEd::FNode* FDialogModel::Assignment() {
         // but the RHS could be a number literal, or another identifier or a whole expression.
         Next(currentToken.tokenType); // current is now at token after =
         hadRun = true;
-        
+
         if (NextTokenIsBinOp()) {
             // this will be simply a = 5 + 5 or a = b + c - 3 etc. also a = b = 5+3
             lhsIdentifier = new DialogEd::FAssignmentNode(lastToken, lhsIdentifier, MathExpression());
@@ -231,7 +370,7 @@ DialogEd::FNode* FDialogModel::Assignment() {
             // and this is just a normal a = b kinda situation
             lhsIdentifier = new DialogEd::FAssignmentNode(lastToken, lhsIdentifier, Identifier());
         }
-        
+
     }
     if (!hadRun) {
         LOG_ERROR("Syntax Error. Expected Assignment but got %s", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString())
@@ -244,26 +383,46 @@ DialogEd::FNode* FDialogModel::Assignment() {
 }
 
 DialogEd::FNode* FDialogModel::AssignmentOrText() {
-    if (nextToken.tokenType == ETokenType::Text) {
-        // speech
-        return Text();
+    LOG_ERROR("AssignmentOrText: Beginning with %s and %s: \"%s%s\"",
+        *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString(),
+        *UEnum::GetDisplayValueAsText(nextToken.tokenType).ToString(),
+        *currentToken.value,
+        *nextToken.value
+        );
+    // this will get the identifier however shaped (normal or with type info)
+    // it will, in any case, strip the colon if there is one.
+    auto identifier = Identifier();
+   
+    if (currentToken.tokenType == ETokenType::Text) {
+        return Text(identifier);
     }
-    if (nextToken.tokenType == ETokenType::SingleEqual) {
+    if (currentToken.tokenType == ETokenType::SingleEqual) {
         // account for successive assignments
-        return Assignment();
+        return Assignment(identifier);
     }
     // todo: this can also be a post increment or post decrement
 
-    LOG_ERROR("Syntax Error: Unexpected symbols. Got %s %s", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString(), *UEnum::GetDisplayValueAsText(nextToken.tokenType).ToString());
+    LOG_ERROR("AssignmentOrText: Unexpected symbols. Got %s and %s: \"%s%s\"",
+        *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString(),
+        *UEnum::GetDisplayValueAsText(nextToken.tokenType).ToString(),
+        *currentToken.value,
+        *nextToken.value
+        );
     Next(currentToken.tokenType);
     return nullptr;
 }
 
 DialogEd::FNode* FDialogModel::RunThreadStatement(DialogEd::FNode* node) {
+    LOG_INFO("Handling token %s", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString());
     node->left = Statement();
     if (!node->left || node->left->token.tokenType == ETokenType::Invalid) {
         // todo: should analyse the tokens here and see with which one it went derp.
-        LOG_ERROR("Unknown / invalid token discovered: %s", *UEnum::GetDisplayValueAsText(lastToken.tokenType).ToString());
+        LOG_ERROR("RunThreadStatement: Unknown / invalid token discovered: %s - check syntax around %s %s %s",
+            *UEnum::GetDisplayValueAsText(lastToken.tokenType).ToString(),
+            *lastToken.value,
+            *currentToken.value,
+            *nextToken.value
+        );
         delete node;
         return nullptr;
     }
@@ -294,17 +453,21 @@ DialogEd::FNode* FDialogModel::If() {
     ifBranches->left = node; // this is going to be the true-branch and right is the false branch
     ifNode->right = ifBranches;
 
-     bool failed = false;
-    
+    bool failed = false;
+
     // now we have to assemble the if branch until we hit either else or endif
-    // run the true-branchNext(currentToken.tokenType);
-    while (currentToken.tokenType != ETokenType::Else || currentToken.tokenType != ETokenType::Endif) {
+    // run the true-branch
+    while (currentToken.tokenType != ETokenType::Else && currentToken.tokenType != ETokenType::Endif) {
+        if (currentToken.tokenType == ETokenType::Else) {
+            break;
+        }
         node = RunThreadStatement(node);
         if (!node) {
             failed = true;
             break;
         }
     }
+    
     if (failed) {
         delete ifNode;
         return nullptr;
@@ -335,26 +498,34 @@ DialogEd::FNode* FDialogModel::Command() {
     // now we get identifier, lparen [identifier identifier ...], rparen
     const auto cmdName = static_cast<DialogEd::FIdentifierNode*>(Identifier());
     const auto cmd = new DialogEd::FCommandNode();
-    cmd->commandName = cmdName->identifierLabel;
-    cmd->token = cmdName->token;
+    cmd->left = cmdName;
     
     Next(ETokenType::LParen);
     bool failed = false;
+    DialogEd::FNode* argNode = nullptr;
     while (currentToken.tokenType != ETokenType::RParen) {
-        auto id = static_cast<DialogEd::FIdentifierNode*>(Identifier());
-        if (!id) {
+        // This can be an identifier or a math expression or a logic expression
+        auto newArg = LogicExpression();
+        if (!newArg) {
             failed = true;
             break;
         }
-        cmd->argumentList.Add(id); // we have to add the nodes, not as part of the tree but for their type information etc.
+        if (!cmd->right) {
+            argNode = newArg;
+            cmd->right = argNode;
+        }
+        else {
+            argNode->left = newArg;
+            argNode = newArg;
+        }
     }
     if (failed) {
         delete cmd;
         return nullptr;
     }
-    
+
     Next(ETokenType::RParen);
-    
+
     return cmd;
 }
 
@@ -371,8 +542,8 @@ DialogEd::FNode* FDialogModel::ChoiceBranches() {
     const auto branchBase = new DialogEd::FNode();
     branchBase->token = currentToken;
     Next(ETokenType::BeginBranching);
-    // we're now at the spot after the **** token and expect now a speaker and text to speak.
-    const auto speech = Text();
+    // we're now at the spot after the choice token and expect now a speaker and text to speak.
+    const auto speech = static_cast<DialogEd::FSpeakNode*>(AssignmentOrText());
     if (!speech) {
         // ... and if it ain't, this is an epic fail
         delete branchBase;
@@ -388,12 +559,22 @@ DialogEd::FNode* FDialogModel::ChoiceBranches() {
         Next(ETokenType::Text);
         auto threadNode = new DialogEd::FNode();
         node->right = threadNode;
-        while (currentToken.tokenType != ETokenType::Branch || currentToken.tokenType != ETokenType::EndBranching) {
+        bool failed = false;
+        while (currentToken.tokenType != ETokenType::Branch && currentToken.tokenType != ETokenType::EndBranching) {
             // run until we hit the next branch or the end of the branching
             threadNode = RunThreadStatement(threadNode);
+            if (!threadNode) {
+                failed = true;
+                break;
+            }
         }
-        // now we oughta be at the branch
-        
+        // / now we oughta be at the branch
+
+        if (failed) {
+            delete branchBase;
+            return nullptr;
+        }
+
         // if we have a next branch, swap the node pointer
         if (currentToken.tokenType == ETokenType::Branch) {
             // if so, next next branch node and cycle the current node out.
@@ -402,6 +583,8 @@ DialogEd::FNode* FDialogModel::ChoiceBranches() {
             node = nextChoice;
         }
     }
+
+    Next(ETokenType::EndBranching);
     
     return branchBase;
 }
@@ -434,10 +617,6 @@ DialogEd::FNode* FDialogModel::Statement() {
             LOG_ERROR("Invalid %s found. Check Syntax near '%s'", *enumType, *currentToken.value);
             return nullptr;
     }
-
-    // to make rider shut up while the switch case is incomplete
-    LOG_ERROR("Invalid %s found. Check Syntax near '%s'", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString(), *currentToken.value);
-    return nullptr;
 }
 
 bool FDialogModel::CurrentTokenIsBinOp() const {

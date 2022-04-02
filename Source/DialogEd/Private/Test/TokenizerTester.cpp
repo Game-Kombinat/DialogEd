@@ -4,6 +4,7 @@
 #include "Test/TokenizerTester.h"
 
 #include "Logging.h"
+#include "Parser/DialogModel.h"
 #include "Parser/Tokenizer.h"
 
 
@@ -41,5 +42,16 @@ void ATokenizerTester::BeginPlay() {
     
     outputFile.Append("/AssetSrc/Data/Test.output");
     FFileHelper::SaveStringArrayToFile(tokenStrings, *outputFile);
+
+    FDialogModel* dm = new FDialogModel(tokens);
+    dm->Make();
     
+    const FString tree = dm->ToString();
+    outputFile = FPaths::ProjectDir();
+    
+    outputFile.Append("/AssetSrc/Data/Test_Tree.output");
+    FFileHelper::SaveStringToFile(tree, *outputFile);
+
+
+    delete dm;
 }

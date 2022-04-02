@@ -8,6 +8,7 @@ namespace DialogEd {
 }
 
 class FDialogModel {
+
 protected:
     TArray<DialogEd::FNode*> threads;
     TArray<FParsedToken> tokenStack;
@@ -16,9 +17,15 @@ protected:
     FParsedToken nextToken;
 public:
     explicit FDialogModel(const TArray<FParsedToken> tokens);
+    ~FDialogModel();
 
+    TArray<DialogEd::FNode*> GetData() { return threads; }
     // Begins the process of generating the ast
     void Make();
+
+    FString ToString();
+
+    static void TreeToString(DialogEd::FNode* root, FString& buffer);
 
     // advances to the next token on the stack rotating previous and next token entries
     void Next(ETokenType consume);
@@ -35,8 +42,8 @@ public:
     DialogEd::FNode* MathExpression();
     DialogEd::FNode* LogicExpression();
     
-    DialogEd::FNode* Text();
-    DialogEd::FNode* Assignment();
+    DialogEd::FNode* Text(DialogEd::FNode* lhsIdentifier);
+    DialogEd::FNode* Assignment(DialogEd::FNode* lhsIdentifier);
 
     // returns terminal node after full assignment or text expressions
     DialogEd::FNode* AssignmentOrText();

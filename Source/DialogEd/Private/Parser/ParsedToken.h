@@ -43,8 +43,12 @@ enum class ETokenType : uint8 {
     
     Text, // anything between two "
     LParen,
-    RParen
-    
+    RParen,
+
+    // Meta token types, not part of the actual syntax.
+    Node,
+    Speech,
+    BinOp
 };
 
 struct FParsedToken {

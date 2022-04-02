@@ -5,8 +5,7 @@
 namespace DialogEd {
     class FCommandNode : public FNode {
         public:
-        FString commandName;
-        TArray<FIdentifierNode*> argumentList;
+        FCommandNode();
     };
 }
 

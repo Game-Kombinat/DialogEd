@@ -1,7 +1,7 @@
 ﻿#include "BinOpNode.h"
 
-DialogEd::FBinOpNode::FBinOpNode(FParsedToken token, FNode* left, FNode* right) {
-    switch (token.tokenType) {
+DialogEd::FBinOpNode::FBinOpNode(FParsedToken t, FNode* left, FNode* right) {
+    switch (t.tokenType) {
         case ETokenType::Plus:
             opType = EOperatorType::Add;
             break;
@@ -46,4 +46,6 @@ DialogEd::FBinOpNode::FBinOpNode(FParsedToken token, FNode* left, FNode* right) 
     }
     this->left = left;
     this->right = right;
+    token = t;
+    token.tokenType = ETokenType::BinOp;
 }

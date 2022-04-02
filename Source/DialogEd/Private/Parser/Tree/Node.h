@@ -9,5 +9,8 @@ namespace DialogEd {
         FNode* right;
         FNode();
         ~FNode();
+        FString ToString();
+
+        void ToString(FString& buffer, FString prefix, FNode* n, bool isLeft);
     };
 }

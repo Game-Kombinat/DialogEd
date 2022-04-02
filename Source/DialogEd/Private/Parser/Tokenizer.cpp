@@ -9,7 +9,7 @@ FTokenizer::FTokenizer() {
     tokenDefinitions.Add(FToken(ETokenType::CommentMultiLine, "\\/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*\\/", 1));/* */
     tokenDefinitions.Add(FToken(ETokenType::If, "if", 2));
     tokenDefinitions.Add(FToken(ETokenType::Else, "else", 2));
-    tokenDefinitions.Add(FToken(ETokenType::Else, "endif", 2));
+    tokenDefinitions.Add(FToken(ETokenType::Endif, "endif", 2));
     tokenDefinitions.Add(FToken(ETokenType::BeginBranching, "choice", 2));
     tokenDefinitions.Add(FToken(ETokenType::EndBranching, "endchoice", 2));
     tokenDefinitions.Add(FToken(ETokenType::Branch, "=>", 1)); // should be a text token after --
