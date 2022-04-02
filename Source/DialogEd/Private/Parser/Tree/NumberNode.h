@@ -1,12 +1,15 @@
 ﻿#pragma once
-#include "Node.h"
+#include "DialogNode.h"
+#include "NumberNode.generated.h"
 
-namespace DialogEd {
-    class FNumberNode : public FNode {
-    public:
-        int value;
+UCLASS()
+class UNumberNode : public UDialogNode {
+    GENERATED_BODY()
+public:
+    UPROPERTY(VisibleAnywhere)
+    int value;
+    UNumberNode();
+    UNumberNode(FParsedToken token);
 
-        FNumberNode(FParsedToken token);
-    };
-}
-
+    void Init(FParsedToken t);
+};

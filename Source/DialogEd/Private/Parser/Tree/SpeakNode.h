@@ -1,10 +1,13 @@
 ﻿#pragma once
-#include "Node.h"
+#include "DialogNode.h"
+#include "SpeakNode.generated.h"
 
-namespace DialogEd {
-    class FSpeakNode : public FNode {
-    public:
-        FSpeakNode(class FIdentifierNode* speaker, class FTextNode* text);
-    };
-}
+UCLASS()
+class USpeakNode : public UDialogNode {
+    GENERATED_BODY()
+public:
+    USpeakNode();
+    USpeakNode(class UIdentifierNode* speaker, class UTextNode* text);
 
+    void Init(class UIdentifierNode* speaker, class UTextNode* text);
+};

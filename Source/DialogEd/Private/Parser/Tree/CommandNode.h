@@ -1,11 +1,9 @@
 ﻿#pragma once
-#include "IdentifierNode.h"
-#include "Node.h"
-
-namespace DialogEd {
-    class FCommandNode : public FNode {
-        public:
-        FCommandNode();
-    };
-}
-
+#include "DialogNode.h"
+#include "CommandNode.generated.h"
+UCLASS()
+class UCommandNode : public UDialogNode {
+    GENERATED_BODY()
+public:
+    UCommandNode();
+};

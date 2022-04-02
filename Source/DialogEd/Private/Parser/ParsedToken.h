@@ -1,5 +1,5 @@
 ﻿#pragma once
-
+#include "ParsedToken.generated.h"
 UENUM()
 enum class ETokenType : uint8 {
     Invalid,
@@ -50,10 +50,15 @@ enum class ETokenType : uint8 {
     Speech,
     BinOp
 };
-
+USTRUCT()
 struct FParsedToken {
+    GENERATED_BODY()
+
+    UPROPERTY(VisibleAnywhere)
     ETokenType tokenType;
+    UPROPERTY(VisibleAnywhere)
     FString value;
+    
     int startIndex;
     int endIndex;
     int precedence;

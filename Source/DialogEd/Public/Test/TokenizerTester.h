@@ -9,7 +9,9 @@
 UCLASS()
 class DIALOGED_API ATokenizerTester : public AActor {
     GENERATED_BODY()
-
+protected:
+    UPROPERTY(VisibleAnywhere)
+    TArray<class UDialogNode*> nodes;
 public:
     // Sets default values for this actor's properties
     ATokenizerTester();

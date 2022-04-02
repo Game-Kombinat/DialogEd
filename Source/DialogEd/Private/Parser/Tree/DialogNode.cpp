@@ -1,23 +1,23 @@
-﻿#include "Node.h"
+﻿#include "DialogNode.h"
 
-DialogEd::FNode::FNode() {
+UDialogNode::UDialogNode() {
     left = nullptr;
     right = nullptr;
     token.tokenType = ETokenType::Node;
 }
 
-DialogEd::FNode::~FNode() {
-    delete left;
-    delete right;
-}
+// UDialogNode::~UDialogNode() {
+//     delete left;
+//     delete right;
+// }
 
-FString DialogEd::FNode::ToString() {
+FString UDialogNode::ToString() {
     FString output;
     ToString(output, "", this, false);
     return output;
 }
 
-void DialogEd::FNode::ToString(FString& buffer, FString prefix, FNode* n, bool isLeft) {
+void UDialogNode::ToString(FString& buffer, FString prefix, UDialogNode* n, bool isLeft) {
     if (n) {
         buffer.Append(prefix);
         buffer.Append(isLeft ? "|-- " : "\\-- ");

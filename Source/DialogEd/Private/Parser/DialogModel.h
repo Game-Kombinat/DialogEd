@@ -1,62 +1,59 @@
 ﻿#pragma once
 #include "ParsedToken.h"
 
-namespace DialogEd {
-    class FIdentifierNode;
-    class FNode;
-    
-}
+class UIdentifierNode;
+class UDialogNode;
 
 class FDialogModel {
 
 protected:
-    TArray<DialogEd::FNode*> threads;
+    TArray<UDialogNode*> threads;
     TArray<FParsedToken> tokenStack;
     FParsedToken lastToken;
     FParsedToken currentToken;
     FParsedToken nextToken;
 public:
     explicit FDialogModel(const TArray<FParsedToken> tokens);
-    ~FDialogModel();
+    // ~FDialogModel();
 
-    TArray<DialogEd::FNode*> GetData() { return threads; }
+    TArray<UDialogNode*> GetData() { return threads; }
     // Begins the process of generating the ast
     void Make();
 
     FString ToString();
 
-    static void TreeToString(DialogEd::FNode* root, FString& buffer);
+    static void TreeToString(UDialogNode* root, FString& buffer);
 
     // advances to the next token on the stack rotating previous and next token entries
     void Next(ETokenType consume);
     
     // Start a new thread. everything else must be within a thread
-    DialogEd::FNode* BeginThread();
+    UDialogNode* BeginThread();
 
     // Begins construction of node tree based on an Identifier
-    DialogEd::FNode* Identifier();
+    UDialogNode* Identifier();
 
     // creates node tree for mathematical expressions
-    DialogEd::FNode* LiteralOrIdentifier();
+    UDialogNode* LiteralOrIdentifier();
 
-    DialogEd::FNode* MathExpression();
-    DialogEd::FNode* LogicExpression();
+    UDialogNode* MathExpression();
+    UDialogNode* LogicExpression();
     
-    DialogEd::FNode* Text(DialogEd::FNode* lhsIdentifier);
-    DialogEd::FNode* Assignment(DialogEd::FNode* lhsIdentifier);
+    UDialogNode* Text(UDialogNode* lhsIdentifier);
+    UDialogNode* Assignment(UDialogNode* lhsIdentifier);
 
     // returns terminal node after full assignment or text expressions
-    DialogEd::FNode* AssignmentOrText();
-    DialogEd::FNode* RunThreadStatement(DialogEd::FNode* node);
+    UDialogNode* AssignmentOrText();
+    UDialogNode* RunThreadStatement(UDialogNode* node);
 
-    DialogEd::FNode* If();
+    UDialogNode* If();
 
-    DialogEd::FNode* Command();
+    UDialogNode* Command();
 
-    DialogEd::FNode* ChoiceBranches();
+    UDialogNode* ChoiceBranches();
     
     // Returns any of the valid top level nodes (if, branch, speak etc)
-    DialogEd::FNode* Statement();
+    UDialogNode* Statement();
 
     bool CurrentTokenIsBinOp() const;
 

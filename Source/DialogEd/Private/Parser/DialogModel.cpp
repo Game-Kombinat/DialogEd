@@ -15,11 +15,12 @@ FDialogModel::FDialogModel(const TArray<FParsedToken> tokens) {
     Algo::Reverse(tokenStack);
 }
 
-FDialogModel::~FDialogModel() {
-    for (auto i : threads) {
-        delete i;
-    }
-}
+
+// FDialogModel::~FDialogModel() {
+//     for (auto i : threads) {
+//         delete i;
+//     }
+// }
 
 void FDialogModel::Make() {
     // manually create starting situation for the token look-around
@@ -60,13 +61,13 @@ FString FDialogModel::ToString() {
     return buffer;
 }
 
-void FDialogModel::TreeToString(DialogEd::FNode* root, FString& buffer) {
+void FDialogModel::TreeToString(UDialogNode* root, FString& buffer) {
     struct ListOfLines {
         TArray<FString> list;
     };
     TArray<ListOfLines> lines;
-    TArray<DialogEd::FNode*> level;
-    TArray<DialogEd::FNode*> next;
+    TArray<UDialogNode*> level;
+    TArray<UDialogNode*> next;
     level.Add(root);
     int nn = 1;
     int widest = 0;
@@ -198,16 +199,18 @@ void FDialogModel::Next(ETokenType consume) {
     }
 }
 
-DialogEd::FNode* FDialogModel::BeginThread() {
+UDialogNode* FDialogModel::BeginThread() {
     LOG_INFO("Opening new MainThread");
     Next(ETokenType::OpenStory);
-    return new DialogEd::FNode();
+    return NewObject<UDialogNode>();//  new UNode();
 }
 
-DialogEd::FNode* FDialogModel::Identifier() {
+UDialogNode* FDialogModel::Identifier() {
 
-    DialogEd::FIdentifierNode* identifier = new DialogEd::FIdentifierNode(currentToken);
-    DialogEd::FNode* node = identifier;
+    UIdentifierNode* identifier = NewObject<UIdentifierNode>();// new UIdentifierNode(currentToken);
+    identifier->Init(currentToken);
+    
+    UDialogNode* node = identifier;
     // if next token it's a colon: this could be a variable type definition (i:inventoryItem).
     // or it could be a speaker name (john: "speak")
     if (nextToken.tokenType == ETokenType::Colon) {
@@ -215,7 +218,8 @@ DialogEd::FNode* FDialogModel::Identifier() {
 
         Next(ETokenType::Colon); // and now current is the token after colon
         if (currentToken.tokenType == ETokenType::Identifier) {
-            node = new DialogEd::FIdentifierNode(currentToken, identifier);
+            node = NewObject<UIdentifierNode>(); //new UIdentifierNode(currentToken, identifier);
+            static_cast<UIdentifierNode*>(node)->Init(currentToken, identifier);
             Next(currentToken.tokenType);
         }
     }
@@ -227,13 +231,14 @@ DialogEd::FNode* FDialogModel::Identifier() {
     return node;
 }
 
-DialogEd::FNode* FDialogModel::LiteralOrIdentifier() {
+UDialogNode* FDialogModel::LiteralOrIdentifier() {
     // valid tokens here are: 
     // * number literal
     // * identifier
     if (currentToken.tokenType == ETokenType::NumberLiteral) {
-        const auto t = new DialogEd::FNumberNode(currentToken);
-        Next(currentToken.tokenType);
+        const auto t = NewObject<UNumberNode>();// new UNumberNode(currentToken);
+        t->Init(currentToken);
+        Next(ETokenType::NumberLiteral);
         return t;
     }
     if (currentToken.tokenType == ETokenType::Identifier) {
@@ -244,9 +249,9 @@ DialogEd::FNode* FDialogModel::LiteralOrIdentifier() {
     return nullptr;
 }
 
-DialogEd::FNode* FDialogModel::MathExpression() {
+UDialogNode* FDialogModel::MathExpression() {
     // todo: we could use parenthesis to force operator precedence some day
-    DialogEd::FNode* lhs = LiteralOrIdentifier();
+    UDialogNode* lhs = LiteralOrIdentifier();
     if (!lhs) {
         // LiteralOrIdentifier already spat out error msg
         return nullptr;
@@ -259,10 +264,12 @@ DialogEd::FNode* FDialogModel::MathExpression() {
             // expression should handle identifier and number literals
             const auto rhs = LiteralOrIdentifier();
             if (!rhs) {
-                delete lhs;
                 return nullptr;
             }
-            lhs = new DialogEd::FBinOpNode(opToken, lhs, rhs);
+            auto tmp = NewObject<UBinOpNode>();
+            tmp->Init(opToken, lhs, rhs);
+            lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
+            
         }
 
         // and now check additions, because dots before dashes.
@@ -275,15 +282,17 @@ DialogEd::FNode* FDialogModel::MathExpression() {
                 delete lhs;
                 return nullptr;
             }
-            lhs = new DialogEd::FBinOpNode(opToken, lhs, rhs);
+            auto tmp = NewObject<UBinOpNode>();
+            tmp->Init(opToken, lhs, rhs);
+            lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
         }
     }
     return lhs;
 }
 
-DialogEd::FNode* FDialogModel::LogicExpression() {
+UDialogNode* FDialogModel::LogicExpression() {
     // todo: we could use parenthesis to force operator precedence some day
-    DialogEd::FNode* lhs = MathExpression();
+    UDialogNode* lhs = MathExpression();
     if (!lhs) {
         // LiteralOrIdentifier already spat out error msg
         return nullptr;
@@ -298,7 +307,9 @@ DialogEd::FNode* FDialogModel::LogicExpression() {
                 delete lhs;
                 return nullptr;
             }
-            lhs = new DialogEd::FBinOpNode(opToken, lhs, rhs);
+            auto tmp = NewObject<UBinOpNode>();
+            tmp->Init(opToken, lhs, rhs);
+            lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
         }
         // then or
         while (currentToken.tokenType == ETokenType::Or) {
@@ -309,7 +320,9 @@ DialogEd::FNode* FDialogModel::LogicExpression() {
                 delete lhs;
                 return nullptr;
             }
-            lhs = new DialogEd::FBinOpNode(opToken, lhs, rhs);
+            auto tmp = NewObject<UBinOpNode>();
+            tmp->Init(opToken, lhs, rhs);
+            lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
         }
         // Then check for comparison operations and put them also in a binop
         // and now check additions, because dots before dashes.
@@ -321,14 +334,16 @@ DialogEd::FNode* FDialogModel::LogicExpression() {
                 delete lhs;
                 return nullptr;
             }
-            lhs = new DialogEd::FBinOpNode(opToken, lhs, rhs);
+            auto tmp = NewObject<UBinOpNode>();
+            tmp->Init(opToken, lhs, rhs);
+            lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
         }
     }
     return lhs;
 }
 
-DialogEd::FNode* FDialogModel::Text(DialogEd::FNode* lhsIdentifier) {
-    const auto idNode = static_cast<DialogEd::FIdentifierNode*>(lhsIdentifier);
+UDialogNode* FDialogModel::Text(UDialogNode* lhsIdentifier) {
+    const auto idNode = static_cast<UIdentifierNode*>(lhsIdentifier);
     if (!idNode) {
         LOG_ERROR("Syntax error: Expected Identifier before Text, got %s", *UEnum::GetDisplayValueAsText(lhsIdentifier->token.tokenType).ToString());
         delete lhsIdentifier;
@@ -345,10 +360,16 @@ DialogEd::FNode* FDialogModel::Text(DialogEd::FNode* lhsIdentifier) {
         Next(ETokenType::Text);
     }
 
-    return new DialogEd::FSpeakNode(idNode, new DialogEd::FTextNode(textBaseToken, inValue));
+    auto speakNode = NewObject<USpeakNode>();
+    auto textNode = NewObject<UTextNode>();
+    textNode->Init(textBaseToken, inValue);
+    
+    speakNode->Init(idNode, textNode);
+    
+    return speakNode;
 }
 
-DialogEd::FNode* FDialogModel::Assignment(DialogEd::FNode* lhsIdentifier) {
+UDialogNode* FDialogModel::Assignment(UDialogNode* lhsIdentifier) {
     bool hadRun = false;
     while (currentToken.tokenType == ETokenType::SingleEqual && lhsIdentifier->token.tokenType == ETokenType::Identifier) {
         // assignment
@@ -357,32 +378,40 @@ DialogEd::FNode* FDialogModel::Assignment(DialogEd::FNode* lhsIdentifier) {
         Next(currentToken.tokenType); // current is now at token after =
         hadRun = true;
 
+        // todo: evaluate if we can't do this with just the LogicExpression because it would return a single math expression or number literal
+        // if there is no logic expression nearby.
         if (NextTokenIsBinOp()) {
             // this will be simply a = 5 + 5 or a = b + c - 3 etc. also a = b = 5+3
-            lhsIdentifier = new DialogEd::FAssignmentNode(lastToken, lhsIdentifier, MathExpression());
+            auto tmp = NewObject<UAssignmentNode>(); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
+            tmp->Init(lastToken, lhsIdentifier, MathExpression());
+            lhsIdentifier = tmp;
         }
         else if (NextTokenIsComparison() || NextTokenIsLogicOp()) {
+            auto tmp = NewObject<UAssignmentNode>(); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
+            tmp->Init(lastToken, lhsIdentifier, LogicExpression());
+            lhsIdentifier = tmp;
             // this ends up being like a = b < 5 etc which is coerced into integers. truthyness interpretation not up to AST
             // also possible would be a = b < 5 && d > 3 || c
-            lhsIdentifier = new DialogEd::FAssignmentNode(lastToken, lhsIdentifier, LogicExpression());
+            // lhsIdentifier = new UAssignmentNode(lastToken, lhsIdentifier, LogicExpression());
         }
         else if (nextToken.tokenType == ETokenType::Identifier) {
             // and this is just a normal a = b kinda situation
-            lhsIdentifier = new DialogEd::FAssignmentNode(lastToken, lhsIdentifier, Identifier());
+            auto tmp = NewObject<UAssignmentNode>(); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
+            tmp->Init(lastToken, lhsIdentifier, Identifier());
+            lhsIdentifier = tmp;
         }
 
     }
     if (!hadRun) {
         LOG_ERROR("Syntax Error. Expected Assignment but got %s", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString())
         Next(currentToken.tokenType);
-        delete lhsIdentifier;
         return nullptr;
     }
     // last MathExpression already called Next()
     return lhsIdentifier;
 }
 
-DialogEd::FNode* FDialogModel::AssignmentOrText() {
+UDialogNode* FDialogModel::AssignmentOrText() {
     LOG_ERROR("AssignmentOrText: Beginning with %s and %s: \"%s%s\"",
         *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString(),
         *UEnum::GetDisplayValueAsText(nextToken.tokenType).ToString(),
@@ -400,7 +429,7 @@ DialogEd::FNode* FDialogModel::AssignmentOrText() {
         // account for successive assignments
         return Assignment(identifier);
     }
-    // todo: this can also be a post increment or post decrement
+    // todo: this can also be a post increment or post decrement, might implement later
 
     LOG_ERROR("AssignmentOrText: Unexpected symbols. Got %s and %s: \"%s%s\"",
         *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString(),
@@ -412,7 +441,7 @@ DialogEd::FNode* FDialogModel::AssignmentOrText() {
     return nullptr;
 }
 
-DialogEd::FNode* FDialogModel::RunThreadStatement(DialogEd::FNode* node) {
+UDialogNode* FDialogModel::RunThreadStatement(UDialogNode* node) {
     LOG_INFO("Handling token %s", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString());
     node->left = Statement();
     if (!node->left || node->left->token.tokenType == ETokenType::Invalid) {
@@ -423,21 +452,20 @@ DialogEd::FNode* FDialogModel::RunThreadStatement(DialogEd::FNode* node) {
             *currentToken.value,
             *nextToken.value
         );
-        delete node;
         return nullptr;
     }
-    node->right = new DialogEd::FNode();
+    node->right = NewObject<UDialogNode>(); //  new UNode();
     node = node->right;
     return node;
 }
 
-DialogEd::FNode* FDialogModel::If() {
+UDialogNode* FDialogModel::If() {
     /*
      * If node:
      * left: Logic Expression
      * right: FNode: left: if true (ThreadNode), right: else (ThreadNode)
      */
-    const auto ifNode = new DialogEd::FNode();
+    const auto ifNode = NewObject<UDialogNode>(); // new UNode();
     ifNode->token = currentToken;
     Next(ETokenType::If);
     // we're now at the spot after the if, which can only be a logic expression
@@ -448,8 +476,8 @@ DialogEd::FNode* FDialogModel::If() {
         return nullptr;
     }
     ifNode->left = expression;
-    DialogEd::FNode* node = new DialogEd::FNode();
-    DialogEd::FNode* ifBranches = new DialogEd::FNode();
+    UDialogNode* node = NewObject<UDialogNode>(); //new UNode();
+    UDialogNode* ifBranches = NewObject<UDialogNode>();
     ifBranches->left = node; // this is going to be the true-branch and right is the false branch
     ifNode->right = ifBranches;
 
@@ -475,7 +503,7 @@ DialogEd::FNode* FDialogModel::If() {
     // run the else branch if it exists
     if (currentToken.tokenType == ETokenType::Else) {
         Next(ETokenType::Else);
-        node = new DialogEd::FNode();
+        node = NewObject<UDialogNode>();
         ifBranches->right = node;
         while (currentToken.tokenType != ETokenType::Endif) {
             node = RunThreadStatement(node);
@@ -493,16 +521,16 @@ DialogEd::FNode* FDialogModel::If() {
     return ifNode;
 }
 
-DialogEd::FNode* FDialogModel::Command() {
+UDialogNode* FDialogModel::Command() {
     Next(ETokenType::Command);
     // now we get identifier, lparen [identifier identifier ...], rparen
-    const auto cmdName = static_cast<DialogEd::FIdentifierNode*>(Identifier());
-    const auto cmd = new DialogEd::FCommandNode();
+    const auto cmdName = static_cast<UIdentifierNode*>(Identifier());
+    const auto cmd = NewObject<UCommandNode>(); // new UCommandNode();
     cmd->left = cmdName;
     
     Next(ETokenType::LParen);
     bool failed = false;
-    DialogEd::FNode* argNode = nullptr;
+    UDialogNode* argNode = nullptr;
     while (currentToken.tokenType != ETokenType::RParen) {
         // This can be an identifier or a math expression or a logic expression
         auto newArg = LogicExpression();
@@ -529,7 +557,7 @@ DialogEd::FNode* FDialogModel::Command() {
     return cmd;
 }
 
-DialogEd::FNode* FDialogModel::ChoiceBranches() {
+UDialogNode* FDialogModel::ChoiceBranches() {
 
     /*
      * branch node: left: speak node,
@@ -539,25 +567,25 @@ DialogEd::FNode* FDialogModel::ChoiceBranches() {
      *                                  label: choice label
      *      
      */
-    const auto branchBase = new DialogEd::FNode();
+    const auto branchBase = NewObject<UDialogNode>(); //new UNode();
     branchBase->token = currentToken;
     Next(ETokenType::BeginBranching);
     // we're now at the spot after the choice token and expect now a speaker and text to speak.
-    const auto speech = static_cast<DialogEd::FSpeakNode*>(AssignmentOrText());
+    const auto speech = static_cast<USpeakNode*>(AssignmentOrText());
     if (!speech) {
         // ... and if it ain't, this is an epic fail
         delete branchBase;
         return nullptr;
     }
     branchBase->left = speech;
-    DialogEd::FChoiceNode* node = new DialogEd::FChoiceNode();
+    UChoiceNode* node = NewObject<UChoiceNode>(); // new UChoiceNode();
     branchBase->right = node;
     while (currentToken.tokenType != ETokenType::EndBranching) {
         Next(ETokenType::Branch); // =>
         // now we're at the label node. Which is a Text token
-        node->SetTokenAndLabel(currentToken);
+        node->Init(currentToken);
         Next(ETokenType::Text);
-        auto threadNode = new DialogEd::FNode();
+        auto threadNode = NewObject<UDialogNode>();
         node->right = threadNode;
         bool failed = false;
         while (currentToken.tokenType != ETokenType::Branch && currentToken.tokenType != ETokenType::EndBranching) {
@@ -578,7 +606,7 @@ DialogEd::FNode* FDialogModel::ChoiceBranches() {
         // if we have a next branch, swap the node pointer
         if (currentToken.tokenType == ETokenType::Branch) {
             // if so, next next branch node and cycle the current node out.
-            DialogEd::FChoiceNode* nextChoice = new DialogEd::FChoiceNode();
+            UChoiceNode* nextChoice = NewObject<UChoiceNode>(); //new UChoiceNode();
             node->left = nextChoice;
             node = nextChoice;
         }
@@ -589,7 +617,7 @@ DialogEd::FNode* FDialogModel::ChoiceBranches() {
     return branchBase;
 }
 
-DialogEd::FNode* FDialogModel::Statement() {
+UDialogNode* FDialogModel::Statement() {
     // at this point, the only valid tokens are:
     // * Identifier
     // * if

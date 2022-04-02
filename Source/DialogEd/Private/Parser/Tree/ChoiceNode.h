@@ -1,13 +1,13 @@
 ﻿#pragma once
-#include "Node.h"
-
-namespace DialogEd {
-    class FChoiceNode : public FNode {
-    public:
-        FString choiceLabel;
-        explicit FChoiceNode(FParsedToken t);
-        FChoiceNode();
-        void SetTokenAndLabel(FParsedToken t);
-    };
-}
-
+#include "DialogNode.h"
+#include "ChoiceNode.generated.h"
+UCLASS()
+class UChoiceNode : public UDialogNode {
+    GENERATED_BODY()
+public:
+    UPROPERTY(VisibleAnywhere)
+    FString choiceLabel;
+    explicit UChoiceNode(FParsedToken t);
+    UChoiceNode();
+    void Init(FParsedToken t);
+};

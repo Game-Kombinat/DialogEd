@@ -1,13 +1,13 @@
 ﻿#include "ChoiceNode.h"
 
-DialogEd::FChoiceNode::FChoiceNode(const FParsedToken t) {
-    SetTokenAndLabel(t);
+UChoiceNode::UChoiceNode(const FParsedToken t) {
+    Init(t);
 }
 
-DialogEd::FChoiceNode::FChoiceNode() {
+UChoiceNode::UChoiceNode() {
 }
 
-void DialogEd::FChoiceNode::SetTokenAndLabel(const FParsedToken t) {
+void UChoiceNode::Init(const FParsedToken t) {
     choiceLabel = t.value.TrimChar('"');
     token = t;
 }

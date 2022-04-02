@@ -1,12 +1,16 @@
 ﻿#pragma once
-#include "Node.h"
+#include "DialogNode.h"
+#include "IdentifierNode.generated.h"
 
-namespace DialogEd {
-    class FIdentifierNode : public FNode {
-    public:
-        FString identifierLabel;
+UCLASS()
+class UIdentifierNode : public UDialogNode {
+    GENERATED_BODY()
+public:
+    UPROPERTY(VisibleAnywhere)
+    FString identifierLabel;
+    UIdentifierNode();
+    explicit UIdentifierNode(FParsedToken t, UIdentifierNode* identifierType = nullptr);
 
-        explicit FIdentifierNode(FParsedToken t, FIdentifierNode* identifierType = nullptr);
-    };
-}
+    void Init(FParsedToken t, UIdentifierNode* identifierType = nullptr);
 
+};

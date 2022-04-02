@@ -1,11 +1,15 @@
 ﻿#pragma once
-#include "Node.h"
+#include "DialogNode.h"
+#include "TextNode.generated.h"
 
-namespace DialogEd {
-    class FTextNode : public FNode {
-    public:
-        FString value;
-        explicit FTextNode(FParsedToken t, FString inValue);
-    };
-}
+UCLASS()
+class UTextNode : public UDialogNode {
+    GENERATED_BODY()
+public:
+    UPROPERTY(VisibleAnywhere)
+    FString value;
+    UTextNode();
+    explicit UTextNode(FParsedToken t, FString inValue);
 
+    void Init(FParsedToken t, FString inValue);
+};

@@ -1,10 +1,13 @@
 ﻿#pragma once
-#include "Node.h"
+#include "DialogNode.h"
+#include "AssignmentNode.generated.h"
 
-namespace DialogEd {
-    class FAssignmentNode : public FNode {
-    public:
-        FAssignmentNode(FParsedToken t, FNode* lhs, FNode* rhs);
-    };
-}
+UCLASS()
+class UAssignmentNode : public UDialogNode {
+    GENERATED_BODY()
+public:
+    UAssignmentNode();
+    UAssignmentNode(FParsedToken t, UDialogNode* lhs, UDialogNode* rhs);
 
+    void Init(FParsedToken t, UDialogNode* lhs, UDialogNode* rhs);
+};

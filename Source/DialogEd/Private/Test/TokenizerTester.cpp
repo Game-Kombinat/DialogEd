@@ -51,7 +51,6 @@ void ATokenizerTester::BeginPlay() {
     
     outputFile.Append("/AssetSrc/Data/Test_Tree.output");
     FFileHelper::SaveStringToFile(tree, *outputFile);
-
-
+    this->nodes = dm->GetData();
     delete dm;
 }

@@ -1,51 +1,59 @@
 ﻿#include "BinOpNode.h"
 
-DialogEd::FBinOpNode::FBinOpNode(FParsedToken t, FNode* left, FNode* right) {
+UBinOpNode::UBinOpNode() {
+    opType = EOperatorType::NoOp;
+}
+
+UBinOpNode::UBinOpNode(FParsedToken t, UDialogNode* inLeft, UDialogNode* inRight) {
+    Init(t, inLeft, inRight);
+}
+
+void UBinOpNode::Init(FParsedToken t, UDialogNode* inLeft, UDialogNode* inRight) {
     switch (t.tokenType) {
         case ETokenType::Plus:
             opType = EOperatorType::Add;
-            break;
+        break;
         case ETokenType::Minus:
             opType = EOperatorType::Sub;
-            break;
+        break;
         case ETokenType::Slash:
             opType = EOperatorType::Div;
-            break;
+        break;
         case ETokenType::Asterisk:
             opType = EOperatorType::Mult;
-            break;
+        break;
         
         case ETokenType::Less:
             opType = EOperatorType::Less;
-            break;
+        break;
         case ETokenType::Greater:
             opType = EOperatorType::Greater;
-            break;
+        break;
         case ETokenType::LessOrEqual:
             opType = EOperatorType::LessOrEqual;
-            break;
+        break;
         case ETokenType::GreaterOrEqual:
             opType = EOperatorType::GreaterOrEqual;
-            break;
+        break;
         case ETokenType::Equal:
             opType = EOperatorType::Equal;
-            break;
+        break;
         case ETokenType::NotEqual:
             opType = EOperatorType::NotEqual;
-            break;
+        break;
         
         case ETokenType::And:
             opType = EOperatorType::And;
-            break;
+        break;
         case ETokenType::Or:
             opType = EOperatorType::Or;
-            break;
+        break;
         
         default:
             opType = EOperatorType::NoOp;
     }
-    this->left = left;
-    this->right = right;
+    this->left = inLeft;
+    this->right = inRight;
     token = t;
     token.tokenType = ETokenType::BinOp;
 }

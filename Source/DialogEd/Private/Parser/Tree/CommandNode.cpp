@@ -1,5 +1,5 @@
 ﻿#include "CommandNode.h"
 
-DialogEd::FCommandNode::FCommandNode() {
+UCommandNode::UCommandNode() {
     token = FParsedToken(ETokenType::Command, "", 0, 0, 0);
 }

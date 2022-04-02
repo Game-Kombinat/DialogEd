@@ -3,8 +3,16 @@
 #include "IdentifierNode.h"
 #include "TextNode.h"
 
-DialogEd::FSpeakNode::FSpeakNode(FIdentifierNode* speaker, FTextNode* text) {
-    right = speaker;
-    left = text;
-    token = FParsedToken(ETokenType::Speech, "", 0, 0, 0);
+USpeakNode::USpeakNode() {
+    token.tokenType = ETokenType::Speech;
+}
+
+USpeakNode::USpeakNode(UIdentifierNode* speaker, UTextNode* text) {
+    Init(speaker, text);
+}
+
+void USpeakNode::Init(UIdentifierNode* speaker, UTextNode* text) {
+    left = speaker;
+    right = text;
+    token.tokenType = ETokenType::Speech;
 }
