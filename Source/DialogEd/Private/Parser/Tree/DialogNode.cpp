@@ -12,17 +12,21 @@ UDialogNode::UDialogNode() {
 // }
 
 FString UDialogNode::ToString() {
-    FString output;
-    ToString(output, "", this, false);
-    return output;
+    return FString::Format(TEXT("{\n{0}\n}"), {ToString(1)});
 }
 
-void UDialogNode::ToString(FString& buffer, FString prefix, UDialogNode* n, bool isLeft) {
-    if (n) {
-        buffer.Append(prefix);
-        buffer.Append(isLeft ? "|-- " : "\\-- ");
-        buffer.Append(UEnum::GetDisplayValueAsText(token.tokenType).ToString());
-        ToString(buffer, prefix + (isLeft ? "|   " : "    "), n->left, true);
-        ToString(buffer, prefix + (isLeft ? "|   " : "    "), n->right, false);
+FString UDialogNode::ToString(int indent) {
+    FString output;
+    FString indentation;
+    for (int i = 0; i < indent; ++i) {
+        indentation.Append("\t");
     }
+    output.Append(FString::Format(TEXT("{\n{3}\"type\": \"{0}\",\n{3}\"left\": {1},\n{3}\"right\": {2},\n{3}}"), {
+        UEnum::GetDisplayValueAsText(token.tokenType).ToString(),
+        left ? left->ToString(indent + 1) : "{}",
+        right ? right->ToString(indent + 1) : "{}",
+        indentation
+        
+    }));
+    return output;
 }

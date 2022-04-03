@@ -16,5 +16,5 @@ public:
     // ~UDialogNode();
     FString ToString();
 
-    void ToString(FString& buffer, FString prefix, UDialogNode* n, bool isLeft);
+    FString ToString(int indent);
 };
