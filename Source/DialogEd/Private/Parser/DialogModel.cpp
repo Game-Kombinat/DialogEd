@@ -9,6 +9,7 @@
 #include "Parser/Tree/NumberNode.h"
 #include "Parser/Tree/SpeakNode.h"
 #include "Parser/Tree/TextNode.h"
+#include "Parser/Tree/ThreadNode.h"
 
 FDialogModel::FDialogModel(const TArray<FParsedToken> tokens) {
     tokenStack = tokens;
@@ -195,7 +196,10 @@ void FDialogModel::Next(ETokenType consume) {
 UDialogNode* FDialogModel::BeginThread() {
     LOG_INFO("Opening new MainThread");
     Next(ETokenType::OpenStory);
-    return NewObject<UDialogNode>();//  new UNode();
+    const auto node = NewObject<UThreadNode>();//  new UNode();
+    node->Init(currentToken);
+    Next(ETokenType::OpenStory);
+    return node;
 }
 
 UDialogNode* FDialogModel::Identifier() {
