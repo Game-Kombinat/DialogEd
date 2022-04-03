@@ -1,26 +1,19 @@
 ﻿#include "DialogModel.h"
 
 #include "Logging.h"
-#include "Tree/AssignmentNode.h"
-#include "Tree/BinOpNode.h"
-#include "Tree/ChoiceNode.h"
-#include "Tree/CommandNode.h"
-#include "Tree/IdentifierNode.h"
-#include "Tree/NumberNode.h"
-#include "Tree/SpeakNode.h"
-#include "Tree/TextNode.h"
+#include "Parser/Tree/AssignmentNode.h"
+#include "Parser/Tree/BinOpNode.h"
+#include "Parser/Tree/ChoiceNode.h"
+#include "Parser/Tree/CommandNode.h"
+#include "Parser/Tree/IdentifierNode.h"
+#include "Parser/Tree/NumberNode.h"
+#include "Parser/Tree/SpeakNode.h"
+#include "Parser/Tree/TextNode.h"
 
 FDialogModel::FDialogModel(const TArray<FParsedToken> tokens) {
     tokenStack = tokens;
     Algo::Reverse(tokenStack);
 }
-
-
-// FDialogModel::~FDialogModel() {
-//     for (auto i : threads) {
-//         delete i;
-//     }
-// }
 
 void FDialogModel::Make() {
     // manually create starting situation for the token look-around

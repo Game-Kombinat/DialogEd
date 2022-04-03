@@ -1,4 +1,4 @@
-﻿#include "AssignmentNode.h"
+﻿#include "Parser/Tree/AssignmentNode.h"
 
 UAssignmentNode::UAssignmentNode() {
 }

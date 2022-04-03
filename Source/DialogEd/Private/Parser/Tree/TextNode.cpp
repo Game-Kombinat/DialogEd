@@ -1,4 +1,4 @@
-﻿#include "TextNode.h"
+﻿#include "Parser/Tree/TextNode.h"
 
 UTextNode::UTextNode() {
 }

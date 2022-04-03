@@ -1,7 +1,8 @@
-﻿#include "SpeakNode.h"
+﻿#include "Parser/Tree/SpeakNode.h"
 
-#include "IdentifierNode.h"
-#include "TextNode.h"
+#include "Parser/Tree/IdentifierNode.h"
+#include "Parser/Tree/TextNode.h"
+
 
 USpeakNode::USpeakNode() {
     token.tokenType = ETokenType::Speech;

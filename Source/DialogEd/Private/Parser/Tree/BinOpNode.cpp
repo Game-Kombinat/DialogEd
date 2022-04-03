@@ -1,4 +1,4 @@
-﻿#include "BinOpNode.h"
+﻿#include "Parser/Tree/BinOpNode.h"
 
 UBinOpNode::UBinOpNode() {
     opType = EOperatorType::NoOp;

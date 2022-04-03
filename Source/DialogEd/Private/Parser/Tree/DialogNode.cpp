@@ -1,15 +1,10 @@
-﻿#include "DialogNode.h"
+﻿#include "Parser/Tree/DialogNode.h"
 
 UDialogNode::UDialogNode() {
     left = nullptr;
     right = nullptr;
     token.tokenType = ETokenType::Node;
 }
-
-// UDialogNode::~UDialogNode() {
-//     delete left;
-//     delete right;
-// }
 
 FString UDialogNode::ToString() {
     return FString::Format(TEXT("{\n{0}\n}"), {ToString(1)});
