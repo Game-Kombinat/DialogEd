@@ -1,5 +1,6 @@
 ﻿#include "DialogModel.h"
 
+#include "DialogueActor.h"
 #include "Logging.h"
 #include "Parser/Tree/AssignmentNode.h"
 #include "Parser/Tree/BinOpNode.h"
@@ -276,7 +277,6 @@ UDialogNode* FDialogModel::MathExpression() {
             // expression should handle identifier and number literals
             const auto rhs = LiteralOrIdentifier();
             if (!rhs) {
-                delete lhs;
                 return nullptr;
             }
             auto tmp = NewObject<UBinOpNode>();
@@ -301,7 +301,6 @@ UDialogNode* FDialogModel::LogicExpression() {
             Next(currentToken.tokenType); // now we're at the RHS of the op
             const auto rhs = MathExpression();
             if (!rhs) {
-                delete lhs;
                 return nullptr;
             }
             auto tmp = NewObject<UBinOpNode>();
@@ -314,7 +313,6 @@ UDialogNode* FDialogModel::LogicExpression() {
             Next(currentToken.tokenType); // now we're at the RHS of the op
             const auto rhs = MathExpression();
             if (!rhs) {
-                delete lhs;
                 return nullptr;
             }
             auto tmp = NewObject<UBinOpNode>();
@@ -328,7 +326,6 @@ UDialogNode* FDialogModel::LogicExpression() {
             Next(currentToken.tokenType); // now we're at the RHS of the op
             const auto rhs = MathExpression();
             if (!rhs) {
-                delete lhs;
                 return nullptr;
             }
             auto tmp = NewObject<UBinOpNode>();
@@ -343,7 +340,6 @@ UDialogNode* FDialogModel::Text(UDialogNode* lhsIdentifier) {
     const auto idNode = static_cast<UIdentifierNode*>(lhsIdentifier);
     if (!idNode) {
         LOG_ERROR("Syntax error: Expected Identifier before Text, got %s", *UEnum::GetDisplayValueAsText(lhsIdentifier->token.tokenType).ToString());
-        delete lhsIdentifier;
         Next(currentToken.tokenType);
         return nullptr;
     }
@@ -469,7 +465,6 @@ UDialogNode* FDialogModel::If() {
     const auto expression = LogicExpression();
     if (!expression) {
         // ... and if it ain't, this is an epic fail
-        delete ifNode;
         return nullptr;
     }
     ifNode->left = expression;
@@ -494,7 +489,6 @@ UDialogNode* FDialogModel::If() {
     }
     
     if (failed) {
-        delete ifNode;
         return nullptr;
     }
     // run the else branch if it exists
@@ -512,7 +506,6 @@ UDialogNode* FDialogModel::If() {
     }
     Next(ETokenType::Endif);
     if (failed) {
-        delete ifNode;
         return nullptr;
     }
     return ifNode;
@@ -527,7 +520,8 @@ UDialogNode* FDialogModel::Command() {
     
     Next(ETokenType::LParen);
     bool failed = false;
-    UDialogNode* argNode = nullptr;
+    UDialogNode* argNode = NewObject<UDialogNode>();
+    cmd->right = argNode;
     while (currentToken.tokenType != ETokenType::RParen) {
         // This can be an identifier or a math expression or a logic expression
         auto newArg = LogicExpression();
@@ -535,17 +529,12 @@ UDialogNode* FDialogModel::Command() {
             failed = true;
             break;
         }
-        if (!cmd->right) {
-            argNode = newArg;
-            cmd->right = argNode;
-        }
-        else {
-            argNode->left = newArg;
-            argNode = newArg;
-        }
+        argNode->left = newArg;
+        argNode->right = NewObject<UDialogNode>();
+        argNode = argNode->right;
     }
+    
     if (failed) {
-        delete cmd;
         return nullptr;
     }
 
@@ -571,7 +560,6 @@ UDialogNode* FDialogModel::ChoiceBranches() {
     const auto speech = static_cast<USpeakNode*>(AssignmentOrText());
     if (!speech) {
         // ... and if it ain't, this is an epic fail
-        delete branchBase;
         return nullptr;
     }
     branchBase->left = speech;
@@ -583,7 +571,7 @@ UDialogNode* FDialogModel::ChoiceBranches() {
         node->Init(currentToken);
         Next(ETokenType::Text);
         auto threadNode = NewObject<UDialogNode>();
-        node->right = threadNode;
+        node->left = threadNode;
         bool failed = false;
         while (currentToken.tokenType != ETokenType::Branch && currentToken.tokenType != ETokenType::EndBranching) {
             // run until we hit the next branch or the end of the branching
@@ -596,7 +584,6 @@ UDialogNode* FDialogModel::ChoiceBranches() {
         // / now we oughta be at the branch
 
         if (failed) {
-            delete branchBase;
             return nullptr;
         }
 
@@ -604,7 +591,7 @@ UDialogNode* FDialogModel::ChoiceBranches() {
         if (currentToken.tokenType == ETokenType::Branch) {
             // if so, next next branch node and cycle the current node out.
             UChoiceNode* nextChoice = NewObject<UChoiceNode>(); //new UChoiceNode();
-            node->left = nextChoice;
+            node->right = nextChoice;
             node = nextChoice;
         }
     }

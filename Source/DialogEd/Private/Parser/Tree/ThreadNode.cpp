@@ -8,3 +8,7 @@ void UThreadNode::Init(FParsedToken t) {
     // removes the >>>> identifier and trims off possible whitespace
     threadName = t.value.RightChop(4).TrimStartAndEnd();
 }
+
+UDialogNode* UThreadNode::GetFirstNode() const {
+    return left;
+}

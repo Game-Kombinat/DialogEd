@@ -11,29 +11,50 @@
 class UStoryThread;
 class UDialogueActor;
 
+USTRUCT()
+struct FDialogData {
+    GENERATED_BODY()
+    UPROPERTY()
+    UDialogueActor* dialogueActor;
+    
+    UPROPERTY()
+    FString message;
+
+    TMap<int, FString> choices;
+};
+
+UENUM()
+enum class ERunnerState : uint8 {
+    // All is well, the dialog data can be used
+    Ok,
+    // When attempting to call Next() when we're at a choice node
+    Hold,
+    // dialog data contains choices
+    Choices,
+    // story is through.
+    Done
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStoryFinishedCallback);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStoryStartedCallback);
-/**
- * Runs a StoryThread until its done.
- */
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DIALOGED_API UStoryRunner : public UActorComponent, public IDataContextContainer {
     GENERATED_BODY()
 
-    // UPROPERTY(Transient)
-    // UStoryThread* currentThread;
-    
+    // The node that is the root of the current story.
     UPROPERTY(Transient)
-    TArray<UStoryThread*> threadStack;
-    
-    /** Used so we don't expose widgets in non-ui specific code parts. */
-    UPROPERTY()
-    class UMessageManager* messageManager;
-    UPROPERTY()
-    APlayerController* instigatorController;
-    
-    UPROPERTY()
-    ACharacter* instigatorCharacter;
+    class UThreadNode* threadNode;
+
+    // Currently processing base node.
+    // Tree consists of a number of nodes connected by their right-side children,
+    // Where the left side is the actual execution in that node.
+    UPROPERTY(Transient)
+    class UDialogNode* currentNode;
+
+    // the left child of the currentNode.
+    UPROPERTY(Transient)
+    TArray<UDialogNode*> branchNodeStack;
 
     UPROPERTY()
     class UStoryAsset* storyAsset;
@@ -42,10 +63,8 @@ class DIALOGED_API UStoryRunner : public UActorComponent, public IDataContextCon
     UGameDataContext* dataContext;
 
 protected:
-    /** Action mapping to poll for when progressing the text or any such thing. */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    FName inputAction;
-    
+
+    // todo: we probably gonna need those for evaluating the nodes. If the runner becomes a world subsystem, gonna find out how to get these in here.
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     class UDialogueCommandRegister* commandRegister;
 
@@ -55,11 +74,6 @@ protected:
     
 
 public:
-    UPROPERTY(BlueprintAssignable)
-    FStoryFinishedCallback onFinished;
-    
-    UPROPERTY(BlueprintAssignable)
-    FStoryStartedCallback onStarted;
     
     UPROPERTY()
     TArray<UDialogueActor*> actorsInActiveThread;
@@ -73,29 +87,25 @@ protected:
     void HandleActorsInThread();
 
 public:
-    void Observe(UObject* obj, ELatentActionChangeType changeType);
     void CountRan(const UStoryThread* thread) const;
-    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     UFUNCTION()
-    virtual UGameDataContext* GetDataContext() override; 
+    virtual UGameDataContext* GetDataContext() override;
 
-    void StartNewStoryThread(UStoryThread* thread, APlayerController* controller);
+    bool CanContinue();
+    void ShiftToNextNode();
+    void GoToNextDialogNode();
+
+    ERunnerState Next(FDialogData& dialogData, bool skipAdvance = false);
+
+    ERunnerState NextWithChoice(int choice, FDialogData& dialogData);
 
     UFUNCTION(BlueprintCallable, meta=(Latent))
-    void StartThreadFromAsset(UStoryAsset* asset, FString threadName, APlayerController* controller);
-
-    void SetMessageManager(UMessageManager* manager) {
-        messageManager = manager;
-    }
+    void StartThreadFromAsset(UStoryAsset* asset, FString threadName);
 
     void SetDataContext(UGameDataContext* dc) {
         dataContext = dc;
     }
 
-    UFUNCTION(BlueprintCallable)
-    bool IsRunning() const;
-
-    UMessageManager* GetMessageManager() const;
     UDialogueActor* GetDialogueActor(const FString& nameOrTag) const;
 };

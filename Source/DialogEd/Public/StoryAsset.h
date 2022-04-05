@@ -15,7 +15,7 @@ class DIALOGED_API UStoryAsset : public UObject {
     GENERATED_BODY()
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    TArray<class UDialogNode*> threads;
+    TArray<class UThreadNode*> threads;
 
 public:
 // #if WITH_EDITOR
@@ -24,9 +24,6 @@ public:
     virtual void PostInitProperties() override;
 // #endif
     
-    void AddStoryThread(UDialogNode* storyThread);
-    UStoryThread* GetStoryThread(const FString& storyThreadName);
-    void AddSubThread(const FString& string, UStoryThread* storyThread);
-
-    UStoryThread* GetSubThread(const FString address);
+    void AddStoryThread(UThreadNode* storyThread);
+    class UThreadNode* GetStoryThread(const FString& storyThreadName);
 };

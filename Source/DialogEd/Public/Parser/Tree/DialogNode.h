@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "StoryRunner.h"
 #include "Parser/ParsedToken.h"
 #include "DialogNode.generated.h"
 
@@ -17,4 +18,8 @@ public:
     FString ToString();
 
     FString ToString(int indent);
+    // Get the next node
+    virtual UDialogNode* Next();
+
+    virtual UDialogNode* Statements();
 };

@@ -10,4 +10,10 @@ public:
     explicit UChoiceNode(FParsedToken t);
     UChoiceNode();
     void Init(FParsedToken t);
+
+    TMap<int, FString> GetChoices() const;
+    
+    UChoiceNode* GetChoice(int choice);
+
+    UDialogNode* GetBranch() const;
 };

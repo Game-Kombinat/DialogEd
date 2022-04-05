@@ -10,4 +10,8 @@ public:
     USpeakNode(class UIdentifierNode* speaker, class UTextNode* text);
 
     void Init(class UIdentifierNode* speaker, class UTextNode* text);
+
+    FString GetSpeaker() const;
+
+    FString GetText() const;
 };

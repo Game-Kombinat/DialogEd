@@ -25,3 +25,12 @@ FString UDialogNode::ToString(int indent) {
     }));
     return output;
 }
+
+UDialogNode* UDialogNode::Next() {
+    // default always returns right.
+    return right;
+}
+
+UDialogNode* UDialogNode::Statements() {
+    return left;
+}

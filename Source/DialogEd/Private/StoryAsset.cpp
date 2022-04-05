@@ -2,9 +2,8 @@
 
 
 #include "StoryAsset.h"
-// #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"
-// #endif
+#include "Parser/Tree/ThreadNode.h"
 
 // #if WITH_EDITOR
 void UStoryAsset::PostInitProperties() {
@@ -16,26 +15,15 @@ void UStoryAsset::PostInitProperties() {
 }
 // #endif
 
-void UStoryAsset::AddStoryThread(UStoryThread* storyThread) {
+void UStoryAsset::AddStoryThread(UThreadNode* storyThread) {
     threads.Add(storyThread);
 }
 
-UStoryThread* UStoryAsset::GetStoryThread(const FString& storyThreadName) {
-    for (auto t : threads) {
-        if (t->GetStoryThreadName() == storyThreadName) {
+UThreadNode* UStoryAsset::GetStoryThread(const FString& storyThreadName) {
+    for (const auto t : threads) {
+        if (t->threadName == storyThreadName) {
             return t;
         }
     }
     return nullptr;
-}
-
-void UStoryAsset::AddSubThread(const FString& string, UStoryThread* storyThread) {
-    subThreads.Add(string, storyThread);
-}
-
-UStoryThread* UStoryAsset::GetSubThread(const FString address) {
-    if (!subThreads.Contains(address)) {
-        return nullptr;
-    }
-    return subThreads[address];
 }

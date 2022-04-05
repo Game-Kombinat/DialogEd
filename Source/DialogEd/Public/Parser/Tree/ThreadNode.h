@@ -18,5 +18,6 @@ public:
     FString threadName;
 
     void Init(FParsedToken t);
+    UDialogNode* GetFirstNode() const;
 
 };

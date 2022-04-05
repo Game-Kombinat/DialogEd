@@ -11,6 +11,12 @@
 #include "StoryThread.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "GameFramework/Character.h"
+#include "Parser/Tree/BinOpNode.h"
+#include "Parser/Tree/ChoiceNode.h"
+#include "Parser/Tree/CommandNode.h"
+#include "Parser/Tree/IdentifierNode.h"
+#include "Parser/Tree/SpeakNode.h"
+#include "Parser/Tree/ThreadNode.h"
 #include "Ui/MessagingWidget.h"
 
 
@@ -29,44 +35,34 @@ void UStoryRunner::BeginPlay() {
     actorRegister->OnBeginPlay(GetWorld());
     commandRegister->OnBeginPlay();
     SetComponentTickEnabled(false);
-    FLatentActionManager::OnLatentActionsChanged().AddUObject(this, &UStoryRunner::Observe);
-    // FLatentActionManager::OnLatentActionsChanged().AddUFunction(this, FName("Observe"));
 }
 
 void UStoryRunner::EndPlay(const EEndPlayReason::Type endPlayReason) {
+    // todo: this is probably not needed anymore
     // if we stop play mid execution, we need to clean this up
-    if (threadStack.Num() > 0) {
-        for (auto t : threadStack) {
-            if (t) {
-                t->CleanupCommand();
-            }
-        }
-    }
+    // if (currentThread.Num() > 0) {
+    //     for (auto t : currentThread) {
+    //         if (t) {
+    //             t->CleanupCommand();
+    //         }
+    //     }
+    // }
 }
 
 void UStoryRunner::HandleActorsInThread() {
     actorsInActiveThread.Empty();
-    auto currentThread = threadStack[threadStack.Num() - 1];
-    if (!currentThread) {
-        LOG_ERROR("Cannot handle actors in current thread - there is no current thread!");
-        return;
-    }
-    for (const auto a : currentThread->actorsInThread) {
-        if (a) {
-            actorsInActiveThread.Add(a);
-        }
-    }
-    messageManager->SetRelevantActors(actorsInActiveThread);
-    messageManager->SetDataContext(dataContext);
-}
-
-void UStoryRunner::Observe(UObject* obj, ELatentActionChangeType changeType) {
-    if (obj) {
-        LOG_INFO("LAM changed for obj %s, type %i", *obj->GetName(), static_cast<int>(changeType));
-    }
-    else {
-        LOG_INFO("LAM changed for null obj, type %i", static_cast<int>(changeType));
-    }
+    // todo: this should maybe get baked into the ThreadNode object,
+    // which actors are used under it. In a post processing step after parsing and all.
+    // auto currentThread = currentThread[currentThread.Num() - 1];
+    // if (!currentThread) {
+    //     LOG_ERROR("Cannot handle actors in current thread - there is no current thread!");
+    //     return;
+    // }
+    // for (const auto a : currentThread->actorsInThread) {
+    //     if (a) {
+    //         actorsInActiveThread.Add(a);
+    //     }
+    // }
 }
 
 void UStoryRunner::CountRan(const UStoryThread* thread) const {
@@ -79,166 +75,181 @@ void UStoryRunner::CountRan(const UStoryThread* thread) const {
     dataContext->ForceSetValue(ranKey, current + 1);
 }
 
-
-// Called every frame
-void UStoryRunner::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    if (threadStack.Num() == 0) {
-        SetComponentTickEnabled(false);
-        messageManager->RemoveFromViewport();
-        UWidgetBlueprintLibrary::SetInputMode_GameOnly(instigatorController);
-        instigatorController->SetInputMode(FInputModeGameOnly());
-        // give back character controls when thread is over.
-        instigatorCharacter->EnableInput(instigatorController);
-        // instigatorController->SetShowMouseCursor(false);
-        if (onFinished.IsBound()) {
-            onFinished.Broadcast();
-        }
-        LOG_INFO("All threads done. Suspending StoryRunner.")
-        return;
-    }
-    
-    const auto currentThread = threadStack[threadStack.Num() - 1];
-    // if we have no thread or the current thread ended and the last command is finished
-    if (!currentThread || (!currentThread->CanContinue() && !currentThread->IsRunning())) {
-        LOG_INFO("Thread done: %s", *currentThread->GetStoryThreadName())
-        CountRan(currentThread);
-        threadStack.Pop();
-        return;
-    }
-
-    // This actually was just to give the fucking slate rendering time for a tick
-    // to draw the god damn messaging system so it has a size.
-    // But it turned out to be a useful step for many things.
-    if (currentThread && !currentThread->IsPrimed()) {
-        currentThread->Prime();
-        HandleActorsInThread();
-        return;
-    }
-    // if no current command or current command is done:
-    if (!currentThread->IsRunning() && currentThread->CanContinue()) {
-        currentThread->CleanupCommand();
-        if (currentThread->IsBranching()) {
-            auto bt = currentThread->GetBranchingTarget();
-            currentThread->BranchingConsumed();
-            auto thread = storyAsset->GetSubThread(bt);
-            if (!thread) {
-                LOG_ERROR("Branching target %s is invalid in thread %s!", *bt, *storyAsset->GetName());
-                return;
-            }
-            thread->ResetStoryThread();
-            threadStack.Push(thread);
-            LOG_INFO("branching into %s", *bt);
-            return;
-        }
-        messageManager->SetStoryThread(currentThread);
-        const TSharedPtr<FParsedCommand> rawCmd = MakeShareable<FParsedCommand>(new FParsedCommand(currentThread->GetNext()));
-        UDialogueCommand* command = commandRegister->GetCommand(rawCmd->commandName);
-        if (!command) {
-            LOG_ERROR("Unmapped command: %s", *(rawCmd->commandName));
-            SetComponentTickEnabled(false);
-            return;
-        }
-        
-        // todo: would be better if that happens only once when instantiating the command first time
-        command->SetStoryRunner(this);
-        command->SetWorld(GetWorld());
-
-        command->SetPlayerController(instigatorController);
-        command->SetStoryThread(currentThread);
-
-        FPreparedCommand currentCommand = FPreparedCommand(command, rawCmd);
-        // and execute it.
-        if (currentThread->RunCommand(currentCommand)) {
-            LOG_INFO("Running new command: %s", *rawCmd->commandName);
-        }
-        else {
-            // todo: be nice if we get some diagnostics here as to what exactly went sideways with Verify.
-            LOG_ERROR("Command did not verify: %s", *rawCmd->commandName);
-        }
-    }
-}
-
 UGameDataContext* UStoryRunner::GetDataContext() {
     return dataContext;
 }
 
-void UStoryRunner::StartNewStoryThread(UStoryThread* thread, APlayerController* controller) {
-    if (threadStack.Num() != 0) {
-        LOG_ERROR("Cannot start a new thread while one is already running.");
+bool UStoryRunner::CanContinue() {
+    // returns true if the next node is not a choice node.
+    if (!currentNode && !currentNode->left) {
+        return false;
+    }
+    return currentNode->left->token.tokenType == ETokenType::Speech;
+}
+
+void UStoryRunner::ShiftToNextNode() {
+    // right is always a node that has
+    // left: its logic
+    // right: next node
+    // this creates a chain of commands where going down right goes forward.
+
+    // first, enqueue next token.
+    if (!currentNode->right) {
+        currentNode = branchNodeStack.Pop();
+        currentNode = currentNode->right;
+        
+    }
+    else {
+        currentNode = currentNode->right;
+    }
+
+    // Forward through the tree until we hit a node that has something to run.
+    // Runnable stuff is always left on this top level.
+    while (!currentNode->left) {
+        currentNode = currentNode->right;
+    }
+
+    if (!currentNode) {
+        // This is the end. But it's okay.
         return;
     }
 
-    if (!controller) {
-        LOG_ERROR("Controller is null when starting new story!");
-        return;
+    // Check if it's an if token
+    if (currentNode->left->token.tokenType == ETokenType::If) {
+        // left is expression
+        // right is node with: left: true branch, right: false branch
+        const auto ifNode = static_cast<UBinOpNode*>(currentNode->left->left);
+        const auto ifBranches = currentNode->left->right;
+        if (!ifNode || !ifBranches) {
+            LOG_ERROR("Expected binop node for if branch. didn't get any. this should not go through the parser!");
+            return;
+        }
+        branchNodeStack.Push(currentNode);
+        if (ifNode->Evaluate(this) > 0) {
+            currentNode = ifBranches->left;
+        }
+        else {
+            currentNode = ifBranches->right;
+        }
     }
-    
-    messageManager->AddToViewport();
-    // remove controls from instigator char and store pointers for putting back later
-    const auto controlledChar = controller->GetCharacter();
-    UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(controller);
-    controlledChar->DisableInput(controller);
-    // controller->SetShowMouseCursor(true);
-    instigatorController = controller;
-    instigatorCharacter = controlledChar;
 
-    threadStack.Push(thread);
-    thread->ResetStoryThread();
-    storyAsset = thread->GetStoryAsset();
-    SetComponentTickEnabled(true);
-    
-    if (onStarted.IsBound()) {
-        onStarted.Broadcast();
+    // check if it's a branching token
+    if (currentNode->left->token.tokenType == ETokenType::BeginBranching) {
+        // left: speech node and
+        // right: choice node
+        // on choice node we get:
+        // left: branch
+        // right: next choice (if any)
+        // and it has a label field for the choice on the left
+
+        // we push the current node, so that when whatever chosen branch is finished,
+        // we end up up here and can continue.
+
+        // There is nothing else we need to do here.
+        branchNodeStack.Push(currentNode);
+    }
+
+    if (currentNode->left->token.tokenType == ETokenType::BinOp) {
+        const auto binOp = static_cast<UBinOpNode*>(currentNode->left);
+        if (binOp) {
+            // this would be an assignment at this point.
+            // technically it could be any binop but it would make no sense.
+            binOp->Evaluate(this);
+        }
+    }
+
+    if (currentNode->left->token.tokenType == ETokenType::Command) {
+        // command node:
+        // left: command name
+        // right: arg:      left:   binop
+        //                  right:  next arg
+        const UCommandNode* cmdNode = static_cast<UCommandNode*>(currentNode->left);
+        if (const auto cmd = commandRegister->GetCommand(cmdNode->GetCommandName())) {
+            cmd->Execute(cmdNode->GetArgs(), this);
+        }
     }
 }
 
-void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName, APlayerController* controller) {
+void UStoryRunner::GoToNextDialogNode() {
+    while (currentNode != nullptr && branchNodeStack.Num() > 0) {
+        ShiftToNextNode();
+        const auto currentType = currentNode->Statements()->token.tokenType;
+        if (currentType == ETokenType::Speech || currentType == ETokenType::BeginBranching) {
+            break;
+        }
+    }
+}
+
+ERunnerState UStoryRunner::Next(FDialogData& dialogData, bool skipAdvance) {
+    // trouble here is: we always have a root node that has the statement on the left
+    // and the next execution on the right.
+    // Code here doesn't reflect that. Fix it!
+    if (!skipAdvance || !currentNode) {
+        GoToNextDialogNode();
+    }
+
+    if (!currentNode) {
+        return ERunnerState::Done;
+    }
+    
+    if (currentNode->Statements()->token.tokenType == ETokenType::Speech ) {
+        const auto speech = static_cast<USpeakNode*>(currentNode->left);
+        dialogData.dialogueActor = actorRegister->GetActorForTag(speech->GetSpeaker());
+        dialogData.message = speech->GetText();
+        return ERunnerState::Ok;
+    }
+    
+    if (currentNode->Statements()->token.tokenType == ETokenType::BeginBranching) {
+        const auto speech = static_cast<USpeakNode*>(currentNode->Statements()->left);
+        const auto choice = static_cast<UChoiceNode*>(currentNode->Statements()->right);
+        dialogData.choices = choice->GetChoices();
+        dialogData.dialogueActor = actorRegister->GetActorForTag(speech->GetSpeaker());
+        dialogData.message = speech->GetText();
+        return ERunnerState::Choices;
+    }
+    return ERunnerState::Done;
+}
+
+ERunnerState UStoryRunner::NextWithChoice(int choice, FDialogData& dialogData) {
+    // This here is a little special.
+    // When the last next() returned choices, we didn't advance the current node.
+    // so we're still on the choice node that has:
+    // left: speech
+    // right: first choice
+    // and choice has:
+    //      left: choice branch
+    //      right: next choice
+    // so in order to get the chosen branch we iterate x times over the choice node
+    // and set currentNode to that and then call and return Next().
+    // When this branch ends, the branchNodeStack pops and we can continue from there.
+    // This works on infinite amounts of nesting levels (in theory)
+    auto choiceNode = static_cast<UChoiceNode*>(currentNode->Statements()->right);
+    choiceNode = choiceNode->GetChoice(choice);
+    currentNode = choiceNode->GetBranch();
+
+    // We find ourselves the next dialog node manually ...
+    if (currentNode->left->token.tokenType != ETokenType::Speech || currentNode->left->token.tokenType != ETokenType::BeginBranching) {
+        GoToNextDialogNode();
+    }
+    // ... and skip advancing in Next() because we're already there.
+    return Next(dialogData, true);
+}
+
+void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName) {
     if (!asset) {
         LOG_ERROR("No story asset given to run a thread from!");
         return;
     }
-    UStoryThread* thread = asset->GetStoryThread(threadName);
-    if (thread) {
-        StartNewStoryThread(thread, controller);
+    
+    UThreadNode* thread = asset->GetStoryThread(threadName);
+    if (!thread) {
+        LOG_ERROR("There is no thread named %S in the story asset %s", *threadName, *asset->GetName());
+        return;
     }
-}
 
-bool UStoryRunner::IsRunning() const {
-    return threadStack.Num() > 0;
-}
-
-// void UStoryRunner::StartStory(const UObject* worldContext, UStoryRunner* runner, UStoryAsset* asset, FString threadName, APlayerController* controller, FLatentActionInfo LatentInfo) {
-//     auto world = worldContext->GetWorld();
-//     if (world) {
-//         auto lam = world->GetLatentActionManager();
-//         if (lam.FindExistingAction<FStoryRunnerDelayedAction>(latentInfo.CallbackTarget, latentInfo.UUID) == nullptr) {
-//             // runner->StartThreadFromAsset(asset, threadName, controller);
-//             lam.AddNewAction(latentInfo.CallbackTarget, latentInfo.UUID, new FStoryRunnerDelayedAction(runner, latentInfo));
-//         }
-//     }
-//     else {
-//         LOG_ERROR("No World")
-//     }
-// }
-
-// void UStoryRunner::StartStory(UStoryAsset* asset, FString threadName, APlayerController* controller, FLatentActionInfo latentInfo) {
-//     auto world = GetWorld();
-//     if (world) {
-//         
-//         auto lam = world->GetLatentActionManager();
-//         if (lam.FindExistingAction<FStoryRunnerDelayedAction>(latentInfo.CallbackTarget, latentInfo.UUID) == nullptr) {
-//             StartThreadFromAsset(asset, threadName, controller);
-//             lam.AddNewAction(latentInfo.CallbackTarget, latentInfo.UUID, new FStoryRunnerDelayedAction(this, latentInfo));
-//         }
-//     }
-//     else {
-//         LOG_ERROR("No World")
-//     }
-// }
-
-UMessageManager* UStoryRunner::GetMessageManager() const {
-    return messageManager;
+    storyAsset = asset;
+    threadNode = thread;
+    currentNode = thread->GetFirstNode();
 }
 
 UDialogueActor* UStoryRunner::GetDialogueActor(const FString& nameOrTag) const {

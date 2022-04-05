@@ -17,3 +17,11 @@ void USpeakNode::Init(UIdentifierNode* speaker, UTextNode* text) {
     right = text;
     token.tokenType = ETokenType::Speech;
 }
+
+FString USpeakNode::GetSpeaker() const {
+    return static_cast<UIdentifierNode*>(left)->identifierLabel;
+}
+
+FString USpeakNode::GetText() const {
+    return static_cast<UTextNode*>(right)->value;
+}

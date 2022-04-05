@@ -16,7 +16,8 @@ enum class EOperatorType : uint8 {
     Equal,
     NotEqual,
     And,
-    Or
+    Or,
+    Assignment
 };
 
 UCLASS()
@@ -29,5 +30,17 @@ public:
     UBinOpNode(FParsedToken t, UDialogNode* inLeft, UDialogNode* inRight);
 
     void Init(FParsedToken t, UDialogNode* inLeft, UDialogNode* inRight);
+    int Evaluate(class UStoryRunner* storyRunner) const;
+
+    int GetLeftValue(UStoryRunner* runner) const;
+    
+    int GetRightValue(UStoryRunner* runner) const;
+
+    int Assign(UStoryRunner* runner) const;
+
+    FString GetLeftIdentifier() const;
+
+    static int GetNodeValue(UStoryRunner* runner, UDialogNode* node);
+    
 };
 
