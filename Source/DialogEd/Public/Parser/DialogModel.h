@@ -4,7 +4,7 @@
 class UIdentifierNode;
 class UDialogNode;
 
-class FDialogModel {
+class DIALOGED_API FDialogModel {
 
 protected:
     TArray<UDialogNode*> threads;
@@ -12,8 +12,9 @@ protected:
     FParsedToken lastToken;
     FParsedToken currentToken;
     FParsedToken nextToken;
+    class UStoryAsset* owner;
 public:
-    explicit FDialogModel(const TArray<FParsedToken> tokens);
+    explicit FDialogModel(const TArray<FParsedToken> tokens, class UStoryAsset* ownerAsset);
     // ~FDialogModel();
 
     TArray<UDialogNode*> GetData() { return threads; }

@@ -1,6 +1,6 @@
-﻿#include "Tokenizer.h"
+﻿#include "Parser/Tokenizer.h"
 
-#include "ParsedToken.h"
+#include "Parser/ParsedToken.h"
 
 FTokenizer::FTokenizer() {
     tokenDefinitions.Add(FToken(ETokenType::OpenStory, ">>>>\\s*.+", 3));

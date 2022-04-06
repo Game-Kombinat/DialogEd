@@ -28,7 +28,7 @@ enum class ERunnerState : uint8 {
     // All is well, the dialog data can be used
     Ok,
     // When attempting to call Next() when we're at a choice node
-    Hold,
+    NeedNext,
     // dialog data contains choices
     Choices,
     // story is through.
@@ -59,7 +59,7 @@ class DIALOGED_API UStoryRunner : public UActorComponent, public IDataContextCon
     UPROPERTY()
     class UStoryAsset* storyAsset;
     
-    UPROPERTY()
+    UPROPERTY(EditAnywhere)
     UGameDataContext* dataContext;
 
 protected:
@@ -87,7 +87,7 @@ protected:
     void HandleActorsInThread();
 
 public:
-    void CountRan(const UStoryThread* thread) const;
+    void CountRan(const UThreadNode* thread) const;
 
     UFUNCTION()
     virtual UGameDataContext* GetDataContext() override;
@@ -96,9 +96,11 @@ public:
     void ShiftToNextNode();
     void GoToNextDialogNode();
 
-    ERunnerState Next(FDialogData& dialogData, bool skipAdvance = false);
+    ERunnerState GetCurrent(FDialogData& dialogData);
+    
+    ERunnerState Next();
 
-    ERunnerState NextWithChoice(int choice, FDialogData& dialogData);
+    ERunnerState NextWithChoice(int choice);
 
     UFUNCTION(BlueprintCallable, meta=(Latent))
     void StartThreadFromAsset(UStoryAsset* asset, FString threadName);

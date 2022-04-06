@@ -3,7 +3,7 @@
 #include "AssignmentNode.generated.h"
 
 UCLASS()
-class UAssignmentNode : public UDialogNode {
+class DIALOGED_API UAssignmentNode : public UDialogNode {
     GENERATED_BODY()
 public:
     UAssignmentNode();

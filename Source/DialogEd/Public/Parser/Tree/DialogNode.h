@@ -4,15 +4,18 @@
 #include "DialogNode.generated.h"
 
 UCLASS()
-class UDialogNode : public UObject {
+class DIALOGED_API UDialogNode : public UObject {
     GENERATED_BODY()
 public:
-    UPROPERTY(VisibleAnywhere)
+    UPROPERTY(EditDefaultsOnly)
     FParsedToken token;
-    UPROPERTY(VisibleAnywhere)
+    
+    UPROPERTY(EditDefaultsOnly)
     UDialogNode* left;
-    UPROPERTY(VisibleAnywhere)
+    
+    UPROPERTY(EditDefaultsOnly)
     UDialogNode* right;
+    
     UDialogNode();
     // ~UDialogNode();
     FString ToString();

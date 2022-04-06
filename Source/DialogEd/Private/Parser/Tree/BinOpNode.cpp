@@ -95,14 +95,18 @@ int UBinOpNode::Evaluate(UStoryRunner* storyRunner) const {
             return GetLeftValue(storyRunner) == FMath::Max(1, GetRightValue(storyRunner)) ? 1 : 0;
         case EOperatorType::NotEqual:
             return GetLeftValue(storyRunner) != FMath::Max(1, GetRightValue(storyRunner)) ? 1 : 0;
-        case EOperatorType::And:
+        case EOperatorType::And: {
             bool lboolAnd = GetLeftValue(storyRunner) > 0;
             bool rboolAnd = GetRightValue(storyRunner) > 0;
             return lboolAnd && rboolAnd ? 1 : 0;
-        case EOperatorType::Or:
+        }
+            
+        case EOperatorType::Or: {
             bool lboolOr = GetLeftValue(storyRunner) > 0;
             bool rboolOr = GetRightValue(storyRunner) > 0;
             return lboolOr || rboolOr ? 1 : 0;
+        }
+            
         case EOperatorType::Assignment:
             return Assign(storyRunner);
         default:

@@ -2,7 +2,7 @@
 #include "DialogNode.h"
 #include "ChoiceNode.generated.h"
 UCLASS()
-class UChoiceNode : public UDialogNode {
+class DIALOGED_API UChoiceNode : public UDialogNode {
     GENERATED_BODY()
 public:
     UPROPERTY(VisibleAnywhere)

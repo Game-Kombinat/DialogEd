@@ -3,7 +3,7 @@
 #include "IdentifierNode.generated.h"
 
 UCLASS()
-class UIdentifierNode : public UDialogNode {
+class DIALOGED_API UIdentifierNode : public UDialogNode {
     GENERATED_BODY()
 public:
     UPROPERTY(VisibleAnywhere)

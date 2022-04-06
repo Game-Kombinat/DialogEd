@@ -3,7 +3,7 @@
 #include "SpeakNode.generated.h"
 
 UCLASS()
-class USpeakNode : public UDialogNode {
+class DIALOGED_API USpeakNode : public UDialogNode {
     GENERATED_BODY()
 public:
     USpeakNode();

@@ -1,7 +1,8 @@
-﻿#include "DialogModel.h"
+﻿#include "Parser/DialogModel.h"
 
 #include "DialogueActor.h"
 #include "Logging.h"
+#include "StoryAsset.h"
 #include "Parser/Tree/AssignmentNode.h"
 #include "Parser/Tree/BinOpNode.h"
 #include "Parser/Tree/ChoiceNode.h"
@@ -12,9 +13,10 @@
 #include "Parser/Tree/TextNode.h"
 #include "Parser/Tree/ThreadNode.h"
 
-FDialogModel::FDialogModel(const TArray<FParsedToken> tokens) {
+FDialogModel::FDialogModel(const TArray<FParsedToken> tokens, UStoryAsset* ownerAsset) {
     tokenStack = tokens;
     Algo::Reverse(tokenStack);
+    owner = ownerAsset;
 }
 
 void FDialogModel::Make() {
@@ -196,8 +198,7 @@ void FDialogModel::Next(ETokenType consume) {
 
 UDialogNode* FDialogModel::BeginThread() {
     LOG_INFO("Opening new MainThread");
-    Next(ETokenType::OpenStory);
-    const auto node = NewObject<UThreadNode>();//  new UNode();
+    const auto node = NewObject<UThreadNode>(owner);//  new UNode();
     node->Init(currentToken);
     Next(ETokenType::OpenStory);
     return node;
@@ -205,7 +206,7 @@ UDialogNode* FDialogModel::BeginThread() {
 
 UDialogNode* FDialogModel::Identifier() {
 
-    UIdentifierNode* identifier = NewObject<UIdentifierNode>();// new UIdentifierNode(currentToken);
+    UIdentifierNode* identifier = NewObject<UIdentifierNode>(owner);// new UIdentifierNode(currentToken);
     identifier->Init(currentToken);
     
     UDialogNode* node = identifier;
@@ -216,7 +217,7 @@ UDialogNode* FDialogModel::Identifier() {
 
         Next(ETokenType::Colon); // and now current is the token after colon
         if (currentToken.tokenType == ETokenType::Identifier) {
-            node = NewObject<UIdentifierNode>(); //new UIdentifierNode(currentToken, identifier);
+            node = NewObject<UIdentifierNode>(owner); //new UIdentifierNode(currentToken, identifier);
             static_cast<UIdentifierNode*>(node)->Init(currentToken, identifier);
             Next(currentToken.tokenType);
         }
@@ -234,7 +235,7 @@ UDialogNode* FDialogModel::LiteralOrIdentifier() {
     // * number literal
     // * identifier
     if (currentToken.tokenType == ETokenType::NumberLiteral) {
-        const auto t = NewObject<UNumberNode>();// new UNumberNode(currentToken);
+        const auto t = NewObject<UNumberNode>(owner);// new UNumberNode(currentToken);
         t->Init(currentToken);
         Next(ETokenType::NumberLiteral);
         return t;
@@ -264,7 +265,7 @@ UDialogNode* FDialogModel::MathExpression() {
             if (!rhs) {
                 return nullptr;
             }
-            auto tmp = NewObject<UBinOpNode>();
+            auto tmp = NewObject<UBinOpNode>(owner);
             tmp->Init(opToken, lhs, rhs);
             lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
             
@@ -279,7 +280,7 @@ UDialogNode* FDialogModel::MathExpression() {
             if (!rhs) {
                 return nullptr;
             }
-            auto tmp = NewObject<UBinOpNode>();
+            auto tmp = NewObject<UBinOpNode>(owner);
             tmp->Init(opToken, lhs, rhs);
             lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
         }
@@ -303,7 +304,7 @@ UDialogNode* FDialogModel::LogicExpression() {
             if (!rhs) {
                 return nullptr;
             }
-            auto tmp = NewObject<UBinOpNode>();
+            auto tmp = NewObject<UBinOpNode>(owner);
             tmp->Init(opToken, lhs, rhs);
             lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
         }
@@ -315,7 +316,7 @@ UDialogNode* FDialogModel::LogicExpression() {
             if (!rhs) {
                 return nullptr;
             }
-            auto tmp = NewObject<UBinOpNode>();
+            auto tmp = NewObject<UBinOpNode>(owner);
             tmp->Init(opToken, lhs, rhs);
             lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
         }
@@ -328,7 +329,7 @@ UDialogNode* FDialogModel::LogicExpression() {
             if (!rhs) {
                 return nullptr;
             }
-            auto tmp = NewObject<UBinOpNode>();
+            auto tmp = NewObject<UBinOpNode>(owner);
             tmp->Init(opToken, lhs, rhs);
             lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
         }
@@ -353,8 +354,8 @@ UDialogNode* FDialogModel::Text(UDialogNode* lhsIdentifier) {
         Next(ETokenType::Text);
     }
 
-    auto speakNode = NewObject<USpeakNode>();
-    auto textNode = NewObject<UTextNode>();
+    auto speakNode = NewObject<USpeakNode>(owner);
+    auto textNode = NewObject<UTextNode>(owner);
     textNode->Init(textBaseToken, inValue);
     
     speakNode->Init(idNode, textNode);
@@ -375,12 +376,12 @@ UDialogNode* FDialogModel::Assignment(UDialogNode* lhsIdentifier) {
         // if there is no logic expression nearby.
         if (NextTokenIsBinOp()) {
             // this will be simply a = 5 + 5 or a = b + c - 3 etc. also a = b = 5+3
-            auto tmp = NewObject<UAssignmentNode>(); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
+            auto tmp = NewObject<UAssignmentNode>(owner); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
             tmp->Init(lastToken, lhsIdentifier, MathExpression());
             lhsIdentifier = tmp;
         }
         else if (NextTokenIsComparison() || NextTokenIsLogicOp()) {
-            auto tmp = NewObject<UAssignmentNode>(); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
+            auto tmp = NewObject<UAssignmentNode>(owner); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
             tmp->Init(lastToken, lhsIdentifier, LogicExpression());
             lhsIdentifier = tmp;
             // this ends up being like a = b < 5 etc which is coerced into integers. truthyness interpretation not up to AST
@@ -389,7 +390,7 @@ UDialogNode* FDialogModel::Assignment(UDialogNode* lhsIdentifier) {
         }
         else if (nextToken.tokenType == ETokenType::Identifier) {
             // and this is just a normal a = b kinda situation
-            auto tmp = NewObject<UAssignmentNode>(); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
+            auto tmp = NewObject<UAssignmentNode>(owner); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
             tmp->Init(lastToken, lhsIdentifier, Identifier());
             lhsIdentifier = tmp;
         }
@@ -447,7 +448,7 @@ UDialogNode* FDialogModel::RunThreadStatement(UDialogNode* node) {
         );
         return nullptr;
     }
-    node->right = NewObject<UDialogNode>(); //  new UNode();
+    node->right = NewObject<UDialogNode>(owner); //  new UNode();
     node = node->right;
     return node;
 }
@@ -458,7 +459,7 @@ UDialogNode* FDialogModel::If() {
      * left: Logic Expression
      * right: FNode: left: if true (ThreadNode), right: else (ThreadNode)
      */
-    const auto ifNode = NewObject<UDialogNode>(); // new UNode();
+    const auto ifNode = NewObject<UDialogNode>(owner); // new UNode();
     ifNode->token = currentToken;
     Next(ETokenType::If);
     // we're now at the spot after the if, which can only be a logic expression
@@ -468,8 +469,8 @@ UDialogNode* FDialogModel::If() {
         return nullptr;
     }
     ifNode->left = expression;
-    UDialogNode* node = NewObject<UDialogNode>(); //new UNode();
-    UDialogNode* ifBranches = NewObject<UDialogNode>();
+    UDialogNode* node = NewObject<UDialogNode>(owner); //new UNode();
+    UDialogNode* ifBranches = NewObject<UDialogNode>(owner);
     ifBranches->left = node; // this is going to be the true-branch and right is the false branch
     ifNode->right = ifBranches;
 
@@ -494,7 +495,7 @@ UDialogNode* FDialogModel::If() {
     // run the else branch if it exists
     if (currentToken.tokenType == ETokenType::Else) {
         Next(ETokenType::Else);
-        node = NewObject<UDialogNode>();
+        node = NewObject<UDialogNode>(owner);
         ifBranches->right = node;
         while (currentToken.tokenType != ETokenType::Endif) {
             node = RunThreadStatement(node);
@@ -515,12 +516,12 @@ UDialogNode* FDialogModel::Command() {
     Next(ETokenType::Command);
     // now we get identifier, lparen [identifier identifier ...], rparen
     const auto cmdName = static_cast<UIdentifierNode*>(Identifier());
-    const auto cmd = NewObject<UCommandNode>(); // new UCommandNode();
+    const auto cmd = NewObject<UCommandNode>(owner); // new UCommandNode();
     cmd->left = cmdName;
     
     Next(ETokenType::LParen);
     bool failed = false;
-    UDialogNode* argNode = NewObject<UDialogNode>();
+    UDialogNode* argNode = NewObject<UDialogNode>(owner);
     cmd->right = argNode;
     while (currentToken.tokenType != ETokenType::RParen) {
         // This can be an identifier or a math expression or a logic expression
@@ -530,7 +531,7 @@ UDialogNode* FDialogModel::Command() {
             break;
         }
         argNode->left = newArg;
-        argNode->right = NewObject<UDialogNode>();
+        argNode->right = NewObject<UDialogNode>(owner);
         argNode = argNode->right;
     }
     
@@ -553,7 +554,7 @@ UDialogNode* FDialogModel::ChoiceBranches() {
      *                                  label: choice label
      *      
      */
-    const auto branchBase = NewObject<UDialogNode>(); //new UNode();
+    const auto branchBase = NewObject<UDialogNode>(owner); //new UNode();
     branchBase->token = currentToken;
     Next(ETokenType::BeginBranching);
     // we're now at the spot after the choice token and expect now a speaker and text to speak.
@@ -563,14 +564,14 @@ UDialogNode* FDialogModel::ChoiceBranches() {
         return nullptr;
     }
     branchBase->left = speech;
-    UChoiceNode* node = NewObject<UChoiceNode>(); // new UChoiceNode();
+    UChoiceNode* node = NewObject<UChoiceNode>(owner); // new UChoiceNode();
     branchBase->right = node;
     while (currentToken.tokenType != ETokenType::EndBranching) {
         Next(ETokenType::Branch); // =>
         // now we're at the label node. Which is a Text token
         node->Init(currentToken);
         Next(ETokenType::Text);
-        auto threadNode = NewObject<UDialogNode>();
+        auto threadNode = NewObject<UDialogNode>(owner);
         node->left = threadNode;
         bool failed = false;
         while (currentToken.tokenType != ETokenType::Branch && currentToken.tokenType != ETokenType::EndBranching) {
@@ -590,7 +591,7 @@ UDialogNode* FDialogModel::ChoiceBranches() {
         // if we have a next branch, swap the node pointer
         if (currentToken.tokenType == ETokenType::Branch) {
             // if so, next next branch node and cycle the current node out.
-            UChoiceNode* nextChoice = NewObject<UChoiceNode>(); //new UChoiceNode();
+            UChoiceNode* nextChoice = NewObject<UChoiceNode>(owner); //new UChoiceNode();
             node->right = nextChoice;
             node = nextChoice;
         }

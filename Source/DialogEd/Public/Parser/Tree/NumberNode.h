@@ -3,7 +3,7 @@
 #include "NumberNode.generated.h"
 
 UCLASS()
-class UNumberNode : public UDialogNode {
+class DIALOGED_API UNumberNode : public UDialogNode {
     GENERATED_BODY()
 public:
     UPROPERTY(VisibleAnywhere)

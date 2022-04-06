@@ -21,7 +21,7 @@ enum class EOperatorType : uint8 {
 };
 
 UCLASS()
-class UBinOpNode : public UDialogNode {
+class DIALOGED_API UBinOpNode : public UDialogNode {
     GENERATED_BODY()
 public:
     UPROPERTY()

@@ -3,9 +3,14 @@
 
 #include "StoryAssetFactory.h"
 
-#include "FileParser.h"
+#include "Logging.h"
 #include "StoryAsset.h"
 #include "EditorFramework/AssetImportData.h"
+#include "Misc/FileHelper.h"
+#include "Parser/DialogModel.h"
+#include "Parser/Tokenizer.h"
+#include "Parser/Tree/ThreadNode.h"
+
 
 UStoryAssetFactory::UStoryAssetFactory() {
     Formats.Add(FString(TEXT("story;Story File")));
@@ -15,13 +20,28 @@ UStoryAssetFactory::UStoryAssetFactory() {
 }
 
 UObject* UStoryAssetFactory::FactoryCreateFile(UClass* inClass, UObject* inParent, FName inName, EObjectFlags flags, const FString& filename, const TCHAR* parms, FFeedbackContext* warn, bool& outOperationCanceled) {
-    FileParser p(filename);
     auto story = NewObject<UStoryAsset>(inParent, inClass, inName, flags);
     story->assetImportData->Update(filename);
-    p.ParseInto(story);
+    FTokenizer t;
+    FString input;
+    
+    if (!FFileHelper::LoadFileToString(input, *filename)) {
+        LOG_ERROR("Failed reading test story");
+        outOperationCanceled = true;
+        return story;
+    }
+    auto tokens = t.Tokenize(input);
+    TArray<FString> tokenStrings;
+
+    auto dm = MakeShared<FDialogModel>(tokens, story);
+    dm->Make();
+    for (auto node : dm->GetData()) {
+        auto thread = static_cast<UThreadNode*>(node);
+        story->AddStoryThread(thread);
+    }
+    
     outOperationCanceled = false;
     return story;
-
 }
 
 bool UStoryAssetFactory::CanReimport(UObject* obj, TArray<FString>& outFileNames) {

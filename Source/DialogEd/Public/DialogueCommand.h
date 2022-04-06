@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StoryThread.h"
 #include "Kismet/GameplayStatics.h"
 #include "DialogueCommand.generated.h"
 
@@ -23,7 +22,6 @@ public:
     /** Set the world to get all the uobjects a command may need */
     void SetWorld(UWorld* world);
 
-    void SetStoryThread(UStoryThread* storyThread);
 
     virtual void Execute(TArray<class UBinOpNode*> args, class UStoryRunner* runner) PURE_VIRTUAL(UDialogueCommand::Execute);
 

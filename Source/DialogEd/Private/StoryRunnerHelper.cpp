@@ -14,9 +14,8 @@ UStoryRunnerHelper* UStoryRunnerHelper::StartStory(UObject* worldContext, UStory
         LOG_ERROR("Could not find a story runner on the game mode. It needs to be on the game mode!");
         return nullptr;
     }
-    const auto controller = UGameplayStatics::GetPlayerController(worldContext, 0);
     const auto obj = NewObject<UStoryRunnerHelper>();
-    obj->Prepare(runner, asset, threadName, controller);
+    obj->Prepare(runner, asset, threadName);
 
     return obj;
     // auto world = runner->GetWorld();
@@ -36,20 +35,18 @@ UStoryRunnerHelper* UStoryRunnerHelper::StartStory(UObject* worldContext, UStory
     // }
 }
 
-void UStoryRunnerHelper::Prepare(UStoryRunner* runner, UStoryAsset* asset, FString threadName, APlayerController* controller) {
+void UStoryRunnerHelper::Prepare(UStoryRunner* runner, UStoryAsset* asset, FString threadName) {
     storyRunner = runner;
     if (!runner) {
         LOG_ERROR("No runner to run a story");
         return;
     }
-    storyRunner->StartThreadFromAsset(asset, threadName, controller);
-    storyRunner->onFinished.AddDynamic(this, &UStoryRunnerHelper::OnStoryFinished);
+    storyRunner->StartThreadFromAsset(asset, threadName);
 }
 
 void UStoryRunnerHelper::OnStoryFinished() {
     if (storyFinished.IsBound()) {
         storyFinished.Broadcast();
-        storyRunner->onFinished.RemoveDynamic(this, &UStoryRunnerHelper::OnStoryFinished);
     }
 }
 

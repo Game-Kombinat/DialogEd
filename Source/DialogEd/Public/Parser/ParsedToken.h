@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "Internationalization/Regex.h"
 #include "ParsedToken.generated.h"
 UENUM()
 enum class ETokenType : uint8 {

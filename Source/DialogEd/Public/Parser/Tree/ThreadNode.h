@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "DialogNode.h"
-#include "UObject/Object.h"
 #include "ThreadNode.generated.h"
 
 /**
@@ -14,7 +13,7 @@ UCLASS()
 class DIALOGED_API UThreadNode : public UDialogNode {
     GENERATED_BODY()
 public:
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere)
     FString threadName;
 
     void Init(FParsedToken t);

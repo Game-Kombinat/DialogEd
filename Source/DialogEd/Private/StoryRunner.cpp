@@ -6,18 +6,14 @@
 #include "ActorRegister.h"
 #include "DialogueCommandRegister.h"
 #include "Logging.h"
-#include "PreparedCommand.h"
 #include "StoryAsset.h"
-#include "StoryThread.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "GameFramework/Character.h"
 #include "Parser/Tree/BinOpNode.h"
 #include "Parser/Tree/ChoiceNode.h"
 #include "Parser/Tree/CommandNode.h"
-#include "Parser/Tree/IdentifierNode.h"
 #include "Parser/Tree/SpeakNode.h"
 #include "Parser/Tree/ThreadNode.h"
-#include "Ui/MessagingWidget.h"
 
 
 // Sets default values for this component's properties
@@ -32,8 +28,13 @@ UStoryRunner::UStoryRunner() {
 // Called when the game starts
 void UStoryRunner::BeginPlay() {
     Super::BeginPlay();
-    actorRegister->OnBeginPlay(GetWorld());
-    commandRegister->OnBeginPlay();
+    if (actorRegister) {
+        actorRegister->OnBeginPlay(GetWorld());
+    }
+    if (commandRegister) {
+        commandRegister->OnBeginPlay();
+    }
+    dataContext->PrepareRuntimeData();
     SetComponentTickEnabled(false);
 }
 
@@ -65,8 +66,8 @@ void UStoryRunner::HandleActorsInThread() {
     // }
 }
 
-void UStoryRunner::CountRan(const UStoryThread* thread) const {
-    const FString ranKey = FString::Format(TEXT("{0}__ran"), {thread->GetStoryThreadName()});
+void UStoryRunner::CountRan(const UThreadNode* thread) const {
+    const FString ranKey = FString::Format(TEXT("{0}__ran"), {thread->threadName});
     int current = dataContext->GetValue(ranKey);
     if (current < 0) {
         current = 0;
@@ -81,10 +82,10 @@ UGameDataContext* UStoryRunner::GetDataContext() {
 
 bool UStoryRunner::CanContinue() {
     // returns true if the next node is not a choice node.
-    if (!currentNode && !currentNode->left) {
+    if (!currentNode || !currentNode->right) {
         return false;
     }
-    return currentNode->left->token.tokenType == ETokenType::Speech;
+    return currentNode && currentNode->left->token.tokenType == ETokenType::Speech;
 }
 
 void UStoryRunner::ShiftToNextNode() {
@@ -95,22 +96,24 @@ void UStoryRunner::ShiftToNextNode() {
 
     // first, enqueue next token.
     if (!currentNode->right) {
+        // LOG_INFO("Popping from branch stack");
         currentNode = branchNodeStack.Pop();
         currentNode = currentNode->right;
         
     }
     else {
+        // LOG_INFO("Continue branch flow");
         currentNode = currentNode->right;
+        if (!currentNode->left && !currentNode->right && branchNodeStack.Num() > 0) {
+            // LOG_INFO("Found End Node - Popping from branch stack instead");
+            currentNode = branchNodeStack.Pop();
+            currentNode = currentNode->right;
+        }
     }
 
-    // Forward through the tree until we hit a node that has something to run.
-    // Runnable stuff is always left on this top level.
-    while (!currentNode->left) {
-        currentNode = currentNode->right;
-    }
-
-    if (!currentNode) {
+    if (!currentNode || (!currentNode->left && !currentNode->right) && branchNodeStack.Num() == 0) {
         // This is the end. But it's okay.
+        currentNode = nullptr;
         return;
     }
 
@@ -129,7 +132,13 @@ void UStoryRunner::ShiftToNextNode() {
             currentNode = ifBranches->left;
         }
         else {
-            currentNode = ifBranches->right;
+            if (ifBranches->right) {
+                currentNode = ifBranches->right;
+            }
+            else {
+                LOG_INFO("No Else Branch. Popping from branch stack.")
+                currentNode = branchNodeStack.Pop();
+            }
         }
     }
 
@@ -164,15 +173,20 @@ void UStoryRunner::ShiftToNextNode() {
         // right: arg:      left:   binop
         //                  right:  next arg
         const UCommandNode* cmdNode = static_cast<UCommandNode*>(currentNode->left);
-        if (const auto cmd = commandRegister->GetCommand(cmdNode->GetCommandName())) {
-            cmd->Execute(cmdNode->GetArgs(), this);
+        if (commandRegister) {
+            if (const auto cmd = commandRegister->GetCommand(cmdNode->GetCommandName())) {
+                cmd->Execute(cmdNode->GetArgs(), this);
+            }
         }
     }
 }
 
 void UStoryRunner::GoToNextDialogNode() {
-    while (currentNode != nullptr && branchNodeStack.Num() > 0) {
+    while (currentNode != nullptr || branchNodeStack.Num() > 0) {
         ShiftToNextNode();
+        if (!currentNode) {
+            break;
+        }
         const auto currentType = currentNode->Statements()->token.tokenType;
         if (currentType == ETokenType::Speech || currentType == ETokenType::BeginBranching) {
             break;
@@ -180,37 +194,40 @@ void UStoryRunner::GoToNextDialogNode() {
     }
 }
 
-ERunnerState UStoryRunner::Next(FDialogData& dialogData, bool skipAdvance) {
-    // trouble here is: we always have a root node that has the statement on the left
-    // and the next execution on the right.
-    // Code here doesn't reflect that. Fix it!
-    if (!skipAdvance || !currentNode) {
-        GoToNextDialogNode();
-    }
-
-    if (!currentNode) {
-        return ERunnerState::Done;
-    }
-    
+ERunnerState UStoryRunner::GetCurrent(FDialogData& dialogData) {
     if (currentNode->Statements()->token.tokenType == ETokenType::Speech ) {
         const auto speech = static_cast<USpeakNode*>(currentNode->left);
-        dialogData.dialogueActor = actorRegister->GetActorForTag(speech->GetSpeaker());
+        if (actorRegister) {
+            dialogData.dialogueActor = actorRegister->GetActorForTag(speech->GetSpeaker());
+        }
         dialogData.message = speech->GetText();
         return ERunnerState::Ok;
     }
-    
+
     if (currentNode->Statements()->token.tokenType == ETokenType::BeginBranching) {
         const auto speech = static_cast<USpeakNode*>(currentNode->Statements()->left);
         const auto choice = static_cast<UChoiceNode*>(currentNode->Statements()->right);
         dialogData.choices = choice->GetChoices();
-        dialogData.dialogueActor = actorRegister->GetActorForTag(speech->GetSpeaker());
+        if (actorRegister) {
+            dialogData.dialogueActor = actorRegister->GetActorForTag(speech->GetSpeaker());
+        }
         dialogData.message = speech->GetText();
         return ERunnerState::Choices;
     }
-    return ERunnerState::Done;
+
+    return ERunnerState::NeedNext;
 }
 
-ERunnerState UStoryRunner::NextWithChoice(int choice, FDialogData& dialogData) {
+ERunnerState UStoryRunner::Next() {
+    GoToNextDialogNode();
+    
+    if (!currentNode) {
+        return ERunnerState::Done;
+    }
+    return ERunnerState::Ok;
+}
+
+ERunnerState UStoryRunner::NextWithChoice(int choice) {
     // This here is a little special.
     // When the last next() returned choices, we didn't advance the current node.
     // so we're still on the choice node that has:
@@ -221,18 +238,12 @@ ERunnerState UStoryRunner::NextWithChoice(int choice, FDialogData& dialogData) {
     //      right: next choice
     // so in order to get the chosen branch we iterate x times over the choice node
     // and set currentNode to that and then call and return Next().
-    // When this branch ends, the branchNodeStack pops and we can continue from there.
+    // When this branch ends, the branchNodeStack pops and we can continue from there the root of the choice node where right is node after the branch.
     // This works on infinite amounts of nesting levels (in theory)
     auto choiceNode = static_cast<UChoiceNode*>(currentNode->Statements()->right);
     choiceNode = choiceNode->GetChoice(choice);
     currentNode = choiceNode->GetBranch();
-
-    // We find ourselves the next dialog node manually ...
-    if (currentNode->left->token.tokenType != ETokenType::Speech || currentNode->left->token.tokenType != ETokenType::BeginBranching) {
-        GoToNextDialogNode();
-    }
-    // ... and skip advancing in Next() because we're already there.
-    return Next(dialogData, true);
+    return ERunnerState::Ok;
 }
 
 void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName) {
@@ -243,13 +254,13 @@ void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName) 
     
     UThreadNode* thread = asset->GetStoryThread(threadName);
     if (!thread) {
-        LOG_ERROR("There is no thread named %S in the story asset %s", *threadName, *asset->GetName());
+        LOG_ERROR("There is no thread named %s in the story asset %s", *threadName, *asset->GetName());
         return;
     }
 
     storyAsset = asset;
     threadNode = thread;
-    currentNode = thread->GetFirstNode();
+    currentNode = thread;
 }
 
 UDialogueActor* UStoryRunner::GetDialogueActor(const FString& nameOrTag) const {

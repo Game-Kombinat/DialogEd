@@ -6,7 +6,7 @@ struct FTokenGroup {
     TArray<FParsedToken> tokens;
 };
 
-class FTokenizer {
+class DIALOGED_API FTokenizer {
 protected:
     TArray<FParsedToken> parsedTokens;
     TArray<FToken> tokenDefinitions;

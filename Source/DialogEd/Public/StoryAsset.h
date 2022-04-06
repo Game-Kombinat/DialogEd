@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StoryThread.h"
 #include "UObject/Object.h"
 #include "StoryAsset.generated.h"
 
