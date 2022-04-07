@@ -59,16 +59,6 @@ void UStoryRunner::HandleActorsInThread() {
     // }
 }
 
-void UStoryRunner::CountRan(const UThreadNode* thread) const {
-    const FString ranKey = FString::Format(TEXT("{0}__ran"), {thread->GetName()});
-    int current = dataContext->GetValue(ranKey);
-    if (current < 0) {
-        current = 0;
-    }
-    
-    dataContext->ForceSetValue(ranKey, current + 1);
-}
-
 UGameDataContext* UStoryRunner::GetDataContext() {
     return dataContext;
 }

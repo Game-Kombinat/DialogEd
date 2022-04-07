@@ -35,8 +35,6 @@ enum class ERunnerState : uint8 {
     Done
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStoryFinishedCallback);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStoryStartedCallback);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DIALOGED_API UStoryRunner : public UActorComponent, public IDataContextContainer {
@@ -71,7 +69,6 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     class UDataTable* actorMapData;
 
-    // todo: we probably gonna need those for evaluating the nodes. If the runner becomes a world subsystem, gonna find out how to get these in here.
     UPROPERTY(Transient)
     class UDialogueCommandRegister* commandRegister;
 
@@ -89,8 +86,6 @@ public:
     TArray<UDialogueActor*> actorsInActiveThread;
     // Sets default values for this component's properties
     UStoryRunner();
-
-    void CountRan(const UThreadNode* thread) const;
 
     UFUNCTION()
     virtual UGameDataContext* GetDataContext() override;
