@@ -41,7 +41,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStoryStartedCallback);
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class DIALOGED_API UStoryRunner : public UActorComponent, public IDataContextContainer {
     GENERATED_BODY()
-
+protected:
     // The node that is the root of the current story.
     UPROPERTY(Transient)
     class UThreadNode* threadNode;
@@ -52,24 +52,34 @@ class DIALOGED_API UStoryRunner : public UActorComponent, public IDataContextCon
     UPROPERTY(Transient)
     class UDialogNode* currentNode;
 
-    // the left child of the currentNode.
+    // Stack that marks return points when one branch ended.
     UPROPERTY(Transient)
     TArray<UDialogNode*> branchNodeStack;
 
-    UPROPERTY()
+    UPROPERTY(Transient)
     class UStoryAsset* storyAsset;
     
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Transient)
     UGameDataContext* dataContext;
 
-protected:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    class UDataTable* variableTypeMapData;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    class UDataTable* commandMapData;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    class UDataTable* actorMapData;
 
     // todo: we probably gonna need those for evaluating the nodes. If the runner becomes a world subsystem, gonna find out how to get these in here.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(Transient)
     class UDialogueCommandRegister* commandRegister;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(Transient)
     class UActorRegister* actorRegister;
+    
+    UPROPERTY(Transient)
+    class UVariableTypeRegister* variableTypeRegister;
 
     
 
@@ -80,22 +90,15 @@ public:
     // Sets default values for this component's properties
     UStoryRunner();
 
-protected:
-    virtual void BeginPlay() override;
-
-    void HandleActorsInThread();
-
-public:
     void CountRan(const UThreadNode* thread) const;
 
     UFUNCTION()
     virtual UGameDataContext* GetDataContext() override;
 
-    bool HasNext();
-    bool HandleIfElseBranching();
-    bool HandleBranchingNodeTypes();
-    void ShiftToNextNode();
-    void GoToNextDialogNode();
+    bool HasNext() const;
+
+    int GetVariableValue(const FString& type, const FString& name) const;
+    void SetVariableValue(const FString& type, const FString& name, int value) const;
 
     ERunnerState GetCurrent(FDialogData& dialogData);
     
@@ -111,4 +114,13 @@ public:
     }
 
     UDialogueActor* GetDialogueActor(const FString& nameOrTag) const;
+    
+protected:
+    virtual void BeginPlay() override;
+
+    void HandleActorsInThread();
+    bool HandleIfElseBranching();
+    bool HandleBranchingNodeTypes();
+    void ShiftToNextNode();
+    void GoToNextDialogNode();
 };

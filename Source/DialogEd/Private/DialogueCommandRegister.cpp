@@ -6,6 +6,9 @@
 #include "Logging.h"
 
 UClass* UDialogueCommandRegister::FindClassForName(const FString& name) const {
+    if (!commandMap) {
+        return nullptr;
+    }
     const FString contextString;
     const auto row = commandMap->FindRow<FCommandRelation>(FName(name), *contextString);
     if (row) {
@@ -28,7 +31,8 @@ UDialogueCommand* UDialogueCommandRegister::GetCommand(const FString name) {
     return newInstance;
 }
 
-void UDialogueCommandRegister::OnBeginPlay() {
-    // this is relevant mostly in editor. cleans up left over entries from last PIE session.
+void UDialogueCommandRegister::Init(UWorld* inWorld, UDataTable* inCommandMap) {
     instantiatedCommands.Empty();
+    commandMap = inCommandMap;
+    world = inWorld;
 }

@@ -12,7 +12,7 @@
  * 
  */
 UCLASS()
-class DIALOGED_API UActorRegister : public UDataAsset {
+class DIALOGED_API UActorRegister : public UObject {
     GENERATED_BODY()
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -26,7 +26,7 @@ protected:
 
 public:
     /** Mostly useful in editor because resolvedActors will not be wiped between PIE sessions. */
-    void OnBeginPlay(UWorld* world);
+    void Init(UWorld* world, UDataTable* actorTypeData);
 
     UDialogueActor* GetActorForTag(FName tag);
     UDialogueActor* GetActorForTag(FString tag);

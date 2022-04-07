@@ -10,7 +10,7 @@
  * Register asset that is used to fetch actual code for dialogue instructions.
  */
 UCLASS()
-class DIALOGED_API UDialogueCommandRegister : public UDataAsset {
+class DIALOGED_API UDialogueCommandRegister : public UObject {
     GENERATED_BODY()
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -20,6 +20,9 @@ protected:
     UPROPERTY(Transient)
     TMap<FString, UDialogueCommand*> instantiatedCommands;
 
+    UPROPERTY(Transient)
+    UWorld* world;
+
     UClass* FindClassForName(const FString& name) const;
     
 public:
@@ -27,5 +30,5 @@ public:
     UDialogueCommand* GetCommand(FString name);
 
     /** Call some initialisation code on begin play. */
-    void OnBeginPlay();
+    void Init(UWorld* inWorld, UDataTable* inCommandMap);
 };

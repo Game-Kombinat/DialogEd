@@ -137,8 +137,7 @@ int UBinOpNode::GetRightValue(UStoryRunner* runner) const {
 }
 
 int UBinOpNode::Assign(UStoryRunner* runner) const {
-    LOG_INFO("BinOp Assignment!")
-    runner->GetDataContext()->ForceSetValue(GetLeftIdentifier(), GetRightValue(runner));
+    runner->SetVariableValue(GetLeftType(), GetLeftIdentifier(), GetRightValue(runner));
     return 1;
 }
 
@@ -150,10 +149,18 @@ FString UBinOpNode::GetLeftIdentifier() const {
     return lval->identifierLabel;
 }
 
+FString UBinOpNode::GetLeftType() const {
+    if (!left || left->token.tokenType != ETokenType::Identifier) {
+        return "";
+    }
+    auto lval = static_cast<UIdentifierNode*>(left);
+    return lval->GetIdentifierType();
+}
+
 int UBinOpNode::GetNodeValue(UStoryRunner* runner, UDialogNode* node) {
     if (node->token.tokenType == ETokenType::Identifier) {
         auto lval = static_cast<UIdentifierNode*>(node);
-        return runner->GetDataContext()->GetValue(lval->identifierLabel);
+        return runner->GetVariableValue(lval->GetIdentifierType(), lval->identifierLabel);
     }
     if (node->token.tokenType == ETokenType::NumberLiteral) {
         auto lval = static_cast<UNumberNode*>(node);

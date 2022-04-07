@@ -7,14 +7,18 @@
 #include "Logging.h"
 #include "Kismet/GameplayStatics.h"
 
-void UActorRegister::OnBeginPlay(UWorld* world) {
+void UActorRegister::Init(UWorld* world, UDataTable* actorTypeData) {
     resolvedActors.Empty();
     this->activeWorld = world;
+    tagToTypeMap = actorTypeData;
 }
 
 UDialogueActor* UActorRegister::GetActorForTag(FName tag) {
     if (resolvedActors.Contains(tag)) {
         return resolvedActors[tag];
+    }
+    if (!tagToTypeMap) {
+        return nullptr;
     }
     const FString contextString;
     const auto row = tagToTypeMap->FindRow<FActorLookupRow>(tag, contextString);

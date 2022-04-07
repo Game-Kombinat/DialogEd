@@ -12,5 +12,5 @@ public:
     explicit UIdentifierNode(FParsedToken t, UIdentifierNode* identifierType = nullptr);
 
     void Init(FParsedToken t, UIdentifierNode* identifierType = nullptr);
-
+    FString GetIdentifierType() const;
 };

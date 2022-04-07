@@ -7,6 +7,8 @@
 #include "DialogueCommandRegister.h"
 #include "Logging.h"
 #include "StoryAsset.h"
+#include "VariableTypeHandler.h"
+#include "VariableTypeRegister.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "GameFramework/Character.h"
 #include "Parser/Tree/BinOpNode.h"
@@ -28,13 +30,16 @@ UStoryRunner::UStoryRunner() {
 // Called when the game starts
 void UStoryRunner::BeginPlay() {
     Super::BeginPlay();
-    if (actorRegister) {
-        actorRegister->OnBeginPlay(GetWorld());
-    }
-    if (commandRegister) {
-        commandRegister->OnBeginPlay();
-    }
+    // todo: we will want the data context from the outside.
     dataContext->PrepareRuntimeData();
+    actorRegister = NewObject<UActorRegister>(this);
+    actorRegister->Init(GetWorld(), actorMapData);
+
+    commandRegister = NewObject<UDialogueCommandRegister>(this);
+    commandRegister->Init(GetWorld(), commandMapData);
+
+    variableTypeRegister = NewObject<UVariableTypeRegister>(this);
+    variableTypeRegister->Init(GetWorld(), variableTypeMapData);
     SetComponentTickEnabled(false);
 }
 
@@ -55,7 +60,7 @@ void UStoryRunner::HandleActorsInThread() {
 }
 
 void UStoryRunner::CountRan(const UThreadNode* thread) const {
-    const FString ranKey = FString::Format(TEXT("{0}__ran"), {thread->threadName});
+    const FString ranKey = FString::Format(TEXT("{0}__ran"), {thread->GetName()});
     int current = dataContext->GetValue(ranKey);
     if (current < 0) {
         current = 0;
@@ -68,9 +73,23 @@ UGameDataContext* UStoryRunner::GetDataContext() {
     return dataContext;
 }
 
-bool UStoryRunner::HasNext() {
+bool UStoryRunner::HasNext() const {
     // returns true if the next node is not a choice node.
     return (currentNode && currentNode->right) || branchNodeStack.Num() > 0;
+}
+
+int UStoryRunner::GetVariableValue(const FString& type, const FString& name) const {
+    if (type.IsEmpty()) {
+        return dataContext->GetValue(name);
+    }
+    return variableTypeRegister->GetHandler(type)->GetValue(name);
+}
+
+void UStoryRunner::SetVariableValue(const FString& type, const FString& name, const int value) const {
+    if (type.IsEmpty()) {
+        dataContext->ForceSetValue(name, value);
+    }
+    variableTypeRegister->GetHandler(type)->SetValue(name, value);
 }
 
 bool UStoryRunner::HandleIfElseBranching() {

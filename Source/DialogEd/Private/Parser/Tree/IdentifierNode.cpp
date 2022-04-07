@@ -12,3 +12,12 @@ void UIdentifierNode::Init(FParsedToken t, UIdentifierNode* identifierType) {
     identifierLabel = t.value;
     right = identifierType;
 }
+
+FString UIdentifierNode::GetIdentifierType() const {
+    if (right) {
+        if (const auto id = static_cast<UIdentifierNode*>(right)) {
+            return id->identifierLabel;
+        }
+    }
+    return "";
+}
