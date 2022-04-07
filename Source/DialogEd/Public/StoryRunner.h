@@ -59,7 +59,7 @@ protected:
     UPROPERTY(Transient)
     class UStoryAsset* storyAsset;
     
-    UPROPERTY(EditAnywhere, Transient)
+    UPROPERTY(EditAnywhere) // should be transient in the future when we get this form the outside. but right now it must stick
     UGameDataContext* dataContext;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)

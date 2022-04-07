@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "DataContextContainer.h"
 #include "VariableTypeHandler.h"
-#include "UObject/Object.h"
 #include "DataContextVariableHandler.generated.h"
 
 /**
@@ -16,11 +15,11 @@ class DIALOGED_API UDataContextVariableHandler : public UVariableTypeHandler, pu
     GENERATED_BODY()
 protected:
     UPROPERTY(VisibleAnywhere)
-    class UGameDataContext* dataContext;
+    class UStoryRunner* runner;
     
 public:
-    void SetDataContext(UGameDataContext* ctx);
     virtual UGameDataContext* GetDataContext() override;
     virtual int GetValue(FString variableName) override;
     virtual void SetValue(FString variableName, int value) override;
+    virtual void Init(class UStoryRunner* inRunner) override;
 };

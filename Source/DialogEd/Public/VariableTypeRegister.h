@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataTable.h"
 #include "UObject/Object.h"
 #include "VariableTypeRegister.generated.h"
 
@@ -18,18 +17,19 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     UDataTable* typeToHandlerMap;
 
+    UPROPERTY(EditAnywhere, Transient)
+    class UStoryRunner* runner;
+
     UPROPERTY(EditAnywhere)
     TSubclassOf<class UVariableTypeHandler> defaultTypeHandler;
-    
-    UPROPERTY()
-    UVariableTypeHandler* defaultTypeHandlerInstance;
 
     TMap<FString, class UVariableTypeHandler*> resolvedHandlers;
     UPROPERTY(VisibleAnywhere)
     UWorld* world;
     
 public:
-    void Init(UWorld* inWorld, UDataTable* handlerMap);
+    UVariableTypeRegister();
+    void Init(class UStoryRunner* inRunner, UDataTable* handlerMap);
 
     UVariableTypeHandler* GetHandler(const FString& type);
 

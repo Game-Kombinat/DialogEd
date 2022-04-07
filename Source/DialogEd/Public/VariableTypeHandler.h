@@ -22,4 +22,6 @@ public:
 
     virtual void SetValue(FString variableName, int value) PURE_VIRTUAL(return);
 
+    virtual void Init(class UStoryRunner* inRunner) PURE_VIRTUAL(return);
+
 };

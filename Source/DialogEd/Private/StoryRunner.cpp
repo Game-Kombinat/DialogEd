@@ -39,7 +39,7 @@ void UStoryRunner::BeginPlay() {
     commandRegister->Init(GetWorld(), commandMapData);
 
     variableTypeRegister = NewObject<UVariableTypeRegister>(this);
-    variableTypeRegister->Init(GetWorld(), variableTypeMapData);
+    variableTypeRegister->Init(this, variableTypeMapData);
     SetComponentTickEnabled(false);
 }
 

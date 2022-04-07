@@ -3,18 +3,21 @@
 
 #include "DataContextVariableHandler.h"
 
-void UDataContextVariableHandler::SetDataContext(UGameDataContext* ctx) {
-    dataContext = ctx;
-}
+#include "StoryRunner.h"
+
 
 UGameDataContext* UDataContextVariableHandler::GetDataContext() {
-    return dataContext;
+    return runner->GetDataContext();
 }
 
 int UDataContextVariableHandler::GetValue(FString variableName) {
-    return dataContext->GetValue(variableName);
+    return runner->GetDataContext()->GetValue(variableName);
 }
 
 void UDataContextVariableHandler::SetValue(FString variableName, int value) {
-    dataContext->ForceSetValue(variableName, value);
+    runner->GetDataContext()->ForceSetValue(variableName, value);
+}
+
+void UDataContextVariableHandler::Init(UStoryRunner* inRunner) {
+    runner = inRunner;
 }
