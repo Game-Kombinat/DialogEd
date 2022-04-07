@@ -38,18 +38,6 @@ void UStoryRunner::BeginPlay() {
     SetComponentTickEnabled(false);
 }
 
-void UStoryRunner::EndPlay(const EEndPlayReason::Type endPlayReason) {
-    // todo: this is probably not needed anymore
-    // if we stop play mid execution, we need to clean this up
-    // if (currentThread.Num() > 0) {
-    //     for (auto t : currentThread) {
-    //         if (t) {
-    //             t->CleanupCommand();
-    //         }
-    //     }
-    // }
-}
-
 void UStoryRunner::HandleActorsInThread() {
     actorsInActiveThread.Empty();
     // todo: this should maybe get baked into the ThreadNode object,
