@@ -55,9 +55,11 @@ void UBinOpNode::Init(FParsedToken t, UDialogNode* inLeft, UDialogNode* inRight)
         case ETokenType::SingleEqual:
             opType = EOperatorType::Assignment;
             break;
-
-        default:
+        default: {
             opType = EOperatorType::NoOp;
+            LOG_WARNING("Received a token type %s which results in a NoOp situation in binary operator node.", *UEnum::GetDisplayValueAsText(t.tokenType).ToString())
+        }
+            
     }
     this->left = inLeft;
     this->right = inRight;
@@ -135,12 +137,13 @@ int UBinOpNode::GetRightValue(UStoryRunner* runner) const {
 }
 
 int UBinOpNode::Assign(UStoryRunner* runner) const {
-    runner->GetDataContext()->SetValue(GetLeftIdentifier(), GetRightValue(runner));
+    LOG_INFO("BinOp Assignment!")
+    runner->GetDataContext()->ForceSetValue(GetLeftIdentifier(), GetRightValue(runner));
     return 1;
 }
 
 FString UBinOpNode::GetLeftIdentifier() const {
-    if (!left || left->token.tokenType != ETokenType::NumberLiteral) {
+    if (!left || left->token.tokenType != ETokenType::Identifier) {
         return "";
     }
     auto lval = static_cast<UIdentifierNode*>(left);

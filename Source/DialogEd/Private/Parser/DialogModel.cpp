@@ -3,7 +3,6 @@
 #include "DialogueActor.h"
 #include "Logging.h"
 #include "StoryAsset.h"
-#include "Parser/Tree/AssignmentNode.h"
 #include "Parser/Tree/BinOpNode.h"
 #include "Parser/Tree/ChoiceNode.h"
 #include "Parser/Tree/CommandNode.h"
@@ -369,32 +368,16 @@ UDialogNode* FDialogModel::Assignment(UDialogNode* lhsIdentifier) {
         // assignment
         // now, we know the left hand side, it's an identifier, has to be for an assignment.
         // but the RHS could be a number literal, or another identifier or a whole expression.
-        Next(currentToken.tokenType); // current is now at token after =
+        Next(ETokenType::SingleEqual); // current is now at token after =
         hadRun = true;
 
-        // todo: evaluate if we can't do this with just the LogicExpression because it would return a single math expression or number literal
-        // if there is no logic expression nearby.
-        if (NextTokenIsBinOp()) {
-            // this will be simply a = 5 + 5 or a = b + c - 3 etc. also a = b = 5+3
-            auto tmp = NewObject<UAssignmentNode>(owner); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
-            tmp->Init(lastToken, lhsIdentifier, MathExpression());
-            lhsIdentifier = tmp;
-        }
-        else if (NextTokenIsComparison() || NextTokenIsLogicOp()) {
-            auto tmp = NewObject<UAssignmentNode>(owner); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
-            tmp->Init(lastToken, lhsIdentifier, LogicExpression());
-            lhsIdentifier = tmp;
-            // this ends up being like a = b < 5 etc which is coerced into integers. truthyness interpretation not up to AST
-            // also possible would be a = b < 5 && d > 3 || c
-            // lhsIdentifier = new UAssignmentNode(lastToken, lhsIdentifier, LogicExpression());
-        }
-        else if (nextToken.tokenType == ETokenType::Identifier) {
-            // and this is just a normal a = b kinda situation
-            auto tmp = NewObject<UAssignmentNode>(owner); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
-            tmp->Init(lastToken, lhsIdentifier, Identifier());
-            lhsIdentifier = tmp;
-        }
-
+        auto tmp = NewObject<UBinOpNode>(owner); // new UAssignmentNode(lastToken, lhsIdentifier, MathExpression());
+        LOG_INFO("Assignment init, last token is %s and current is %s", *UEnum::GetDisplayValueAsText(lastToken.tokenType).ToString(), *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString());
+        // needed because MathExpression advances through the stack and causes lastToken to change before its copied into the Init function
+        const auto tmpLastToken = lastToken; 
+        tmp->Init(tmpLastToken, lhsIdentifier, MathExpression());
+        lhsIdentifier = tmp;
+        LOG_INFO("Assignment done, current token is now %s", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString());
     }
     if (!hadRun) {
         LOG_ERROR("Syntax Error. Expected Assignment but got %s", *UEnum::GetDisplayValueAsText(currentToken.tokenType).ToString())
@@ -657,7 +640,8 @@ bool FDialogModel::NextTokenIsBinOp() const {
     return nextToken.tokenType == ETokenType::Plus ||
         nextToken.tokenType == ETokenType::Minus ||
         nextToken.tokenType == ETokenType::Slash ||
-        nextToken.tokenType == ETokenType::Asterisk;
+        nextToken.tokenType == ETokenType::Asterisk ||
+            nextToken.tokenType == ETokenType::SingleEqual;
 }
 
 bool FDialogModel::NextTokenIsComparison() const {

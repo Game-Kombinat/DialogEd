@@ -18,13 +18,12 @@ ATokenizerTester::ATokenizerTester() {
 
 void ATokenizerTester::Tick(float DeltaSeconds) {
     Super::Tick(DeltaSeconds);
-    if (runner->CanContinue()) {
-        
+    if (runner->HasNext()) {
         FDialogData d;
         auto retval = runner->GetCurrent(d);
         LOG_INFO("%s", *d.message);
         if (retval == ERunnerState::Choices) {
-            runner->NextWithChoice(0);
+            runner->NextWithChoice(1);
             LOG_INFO("%s", *d.message);
         }
         else {

@@ -92,7 +92,9 @@ public:
     UFUNCTION()
     virtual UGameDataContext* GetDataContext() override;
 
-    bool CanContinue();
+    bool HasNext();
+    bool HandleIfElseBranching();
+    bool HandleBranchingNodeTypes();
     void ShiftToNextNode();
     void GoToNextDialogNode();
 

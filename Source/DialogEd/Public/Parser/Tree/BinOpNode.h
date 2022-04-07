@@ -24,7 +24,8 @@ UCLASS()
 class DIALOGED_API UBinOpNode : public UDialogNode {
     GENERATED_BODY()
 public:
-    UPROPERTY()
+    
+    UPROPERTY(VisibleAnywhere)
     EOperatorType opType;
     UBinOpNode();
     UBinOpNode(FParsedToken t, UDialogNode* inLeft, UDialogNode* inRight);

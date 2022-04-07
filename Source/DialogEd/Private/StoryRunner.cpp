@@ -80,65 +80,41 @@ UGameDataContext* UStoryRunner::GetDataContext() {
     return dataContext;
 }
 
-bool UStoryRunner::CanContinue() {
+bool UStoryRunner::HasNext() {
     // returns true if the next node is not a choice node.
-    if (!currentNode || !currentNode->right) {
-        return false;
-    }
-    return currentNode && currentNode->left->token.tokenType == ETokenType::Speech;
+    return (currentNode && currentNode->right) || branchNodeStack.Num() > 0;
 }
 
-void UStoryRunner::ShiftToNextNode() {
-    // right is always a node that has
-    // left: its logic
-    // right: next node
-    // this creates a chain of commands where going down right goes forward.
-
-    // first, enqueue next token.
-    if (!currentNode->right) {
-        // LOG_INFO("Popping from branch stack");
-        currentNode = branchNodeStack.Pop();
-        currentNode = currentNode->right;
-        
+bool UStoryRunner::HandleIfElseBranching() {
+    // left is expression
+    // right is node with: left: true branch, right: false branch
+    const auto ifNode = static_cast<UBinOpNode*>(currentNode->left->left);
+    const auto ifBranches = currentNode->left->right;
+    if (!ifNode || !ifBranches) {
+        LOG_ERROR("Expected binop node for if branch. didn't get any. this should not go through the parser!");
+        return false;
+    }
+    branchNodeStack.Push(currentNode);
+    if (ifNode->Evaluate(this) > 0) {
+        currentNode = ifBranches->left;
     }
     else {
-        // LOG_INFO("Continue branch flow");
-        currentNode = currentNode->right;
-        if (!currentNode->left && !currentNode->right && branchNodeStack.Num() > 0) {
-            // LOG_INFO("Found End Node - Popping from branch stack instead");
-            currentNode = branchNodeStack.Pop();
-            currentNode = currentNode->right;
-        }
-    }
-
-    if (!currentNode || (!currentNode->left && !currentNode->right) && branchNodeStack.Num() == 0) {
-        // This is the end. But it's okay.
-        currentNode = nullptr;
-        return;
-    }
-
-    // Check if it's an if token
-    if (currentNode->left->token.tokenType == ETokenType::If) {
-        // left is expression
-        // right is node with: left: true branch, right: false branch
-        const auto ifNode = static_cast<UBinOpNode*>(currentNode->left->left);
-        const auto ifBranches = currentNode->left->right;
-        if (!ifNode || !ifBranches) {
-            LOG_ERROR("Expected binop node for if branch. didn't get any. this should not go through the parser!");
-            return;
-        }
-        branchNodeStack.Push(currentNode);
-        if (ifNode->Evaluate(this) > 0) {
-            currentNode = ifBranches->left;
+        if (ifBranches->right) {
+            currentNode = ifBranches->right;
         }
         else {
-            if (ifBranches->right) {
-                currentNode = ifBranches->right;
-            }
-            else {
-                LOG_INFO("No Else Branch. Popping from branch stack.")
-                currentNode = branchNodeStack.Pop();
-            }
+            LOG_INFO("No Else Branch. Popping from branch stack.")
+            currentNode = branchNodeStack.Pop();
+        }
+    }
+    return true;
+}
+
+bool UStoryRunner::HandleBranchingNodeTypes() {
+    // Check if it's an if token
+    if (currentNode->left->token.tokenType == ETokenType::If) {
+        if (!HandleIfElseBranching()) {
+            return false;
         }
     }
 
@@ -155,7 +131,45 @@ void UStoryRunner::ShiftToNextNode() {
         // we end up up here and can continue.
 
         // There is nothing else we need to do here.
+        LOG_INFO("Found choice. Pushing root node for later.")
         branchNodeStack.Push(currentNode);
+    }
+    return true;
+}
+
+void UStoryRunner::ShiftToNextNode() {
+    // right is always a node that has
+    // left: its logic
+    // right: next node
+    // this creates a chain of commands where going down right goes forward.
+
+    // first, enqueue next token.
+    if (!currentNode->right) {
+        LOG_INFO("Popping from branch stack");
+        currentNode = branchNodeStack.Pop();
+        currentNode = currentNode->right;
+        
+    }
+    else {
+        LOG_INFO("Continue branch flow");
+        currentNode = currentNode->right;
+        if (!currentNode->left && !currentNode->right && branchNodeStack.Num() > 0) {
+            LOG_INFO("Found End Node - Popping from branch stack instead");
+            currentNode = branchNodeStack.Pop();
+            currentNode = currentNode->right;
+        }
+    }
+
+    if (!currentNode || (!currentNode->left && !currentNode->right) && branchNodeStack.Num() == 0) {
+        // This is the end. But it's okay.
+        LOG_INFO("Story end detected. brach stack is empty.");
+        currentNode = nullptr;
+        return;
+    }
+    LOG_INFO("Next Node: %s", *UEnum::GetDisplayValueAsText(currentNode->left->token.tokenType).ToString());
+
+    if (!HandleBranchingNodeTypes()) {
+        return;
     }
 
     if (currentNode->left->token.tokenType == ETokenType::BinOp) {
@@ -261,6 +275,7 @@ void UStoryRunner::StartThreadFromAsset(UStoryAsset* asset, FString threadName) 
     storyAsset = asset;
     threadNode = thread;
     currentNode = thread;
+    HandleBranchingNodeTypes();
 }
 
 UDialogueActor* UStoryRunner::GetDialogueActor(const FString& nameOrTag) const {
