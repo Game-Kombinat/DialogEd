@@ -23,7 +23,9 @@ protected:
     UPROPERTY(EditAnywhere)
     TSubclassOf<class UVariableTypeHandler> defaultTypeHandler;
 
+    UPROPERTY()
     TMap<FString, class UVariableTypeHandler*> resolvedHandlers;
+    
     UPROPERTY(VisibleAnywhere)
     UWorld* world;
     

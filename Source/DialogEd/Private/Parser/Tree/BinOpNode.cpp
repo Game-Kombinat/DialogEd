@@ -93,8 +93,14 @@ int UBinOpNode::Evaluate(UStoryRunner* storyRunner) const {
             return GetLeftValue(storyRunner) <= GetRightValue(storyRunner) ? 1 : 0;
         case EOperatorType::GreaterOrEqual:
             return GetLeftValue(storyRunner) >= GetRightValue(storyRunner) ? 1 : 0;
-        case EOperatorType::Equal:
+        case EOperatorType::Equal: {
+            // covers the case `if someVar` and evaluates that to true or false
+            if (HasOnlyLeftHandSide()) {
+                return GetLeftValue(storyRunner) > 0 ? 1 : 0;
+            }
             return GetLeftValue(storyRunner) == GetRightValue(storyRunner) ? 1 : 0;
+        }
+            
         case EOperatorType::NotEqual:
             return GetLeftValue(storyRunner) != GetRightValue(storyRunner) ? 1 : 0;
         case EOperatorType::And: {
@@ -147,6 +153,10 @@ FString UBinOpNode::GetLeftIdentifier() const {
     }
     auto lval = static_cast<UIdentifierNode*>(left);
     return lval->identifierLabel;
+}
+
+bool UBinOpNode::HasOnlyLeftHandSide() const {
+    return right == nullptr;
 }
 
 FString UBinOpNode::GetLeftType() const {

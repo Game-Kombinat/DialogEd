@@ -337,9 +337,7 @@ UDialogNode* FDialogModel::LogicExpression() {
     // this handles stuff like "if someVarName" and evaluates if that is true (> 0)
     if (lhs == startExpression) {
         const auto tmp = NewObject<UBinOpNode>(owner);
-        const auto number = NewObject<UNumberNode>(owner);
-        number->Init(FParsedToken(ETokenType::NumberLiteral, "1", 0, 0, 0));
-        tmp->Init(FParsedToken(ETokenType::Equal, "", 0, 0, 0), startExpression, number);
+        tmp->Init(FParsedToken(ETokenType::Equal, "", 0, 0, 0), startExpression, nullptr);
         lhs = tmp;
     }
     return lhs;

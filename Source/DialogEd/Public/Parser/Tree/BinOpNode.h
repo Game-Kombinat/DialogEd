@@ -40,6 +40,7 @@ public:
     int Assign(UStoryRunner* runner) const;
 
     FString GetLeftIdentifier() const;
+    bool HasOnlyLeftHandSide() const;
     FString GetLeftType() const;
 
     static int GetNodeValue(UStoryRunner* runner, UDialogNode* node);
