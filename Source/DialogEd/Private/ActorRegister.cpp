@@ -17,8 +17,6 @@ UDialogueActor* UActorRegister::GetActorForTag(FName tag) {
         return resolvedActors[tag];
     }
    
-    const FString contextString;
-    
     UGameplayStatics::GetAllActorsWithTag(activeWorld, tag, actorLookupMap);
     if(actorLookupMap.Num() == 0) {
         LOG_WARNING("No actors with tag %s exist in current world.", *tag.ToString())

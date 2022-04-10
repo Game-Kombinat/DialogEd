@@ -33,7 +33,7 @@ void UStoryRunner::BeginPlay() {
     // todo: we will want the data context from the outside.
     dataContext->PrepareRuntimeData();
     actorRegister = NewObject<UActorRegister>(this);
-    actorRegister->Init(GetWorld(), actorMapData);
+    actorRegister->Init(GetWorld());
 
     commandRegister = NewObject<UDialogueCommandRegister>(this);
     commandRegister->Init(GetWorld(), commandMapData);
