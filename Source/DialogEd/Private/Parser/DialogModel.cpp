@@ -290,6 +290,7 @@ UDialogNode* FDialogModel::MathExpression() {
 UDialogNode* FDialogModel::LogicExpression() {
     // todo: we could use parenthesis to force operator precedence some day
     UDialogNode* lhs = MathExpression();
+    const auto startExpression = lhs;
     if (!lhs) {
         // LiteralOrIdentifier already spat out error msg
         return nullptr;
@@ -328,10 +329,18 @@ UDialogNode* FDialogModel::LogicExpression() {
             if (!rhs) {
                 return nullptr;
             }
-            auto tmp = NewObject<UBinOpNode>(owner);
+            const auto tmp = NewObject<UBinOpNode>(owner);
             tmp->Init(opToken, lhs, rhs);
             lhs = tmp; // new UBinOpNode(opToken, lhs, rhs);
         }
+    }
+    // this handles stuff like "if someVarName" and evaluates if that is true (> 0)
+    if (lhs == startExpression) {
+        const auto tmp = NewObject<UBinOpNode>(owner);
+        const auto number = NewObject<UNumberNode>(owner);
+        number->Init(FParsedToken(ETokenType::NumberLiteral, "1", 0, 0, 0));
+        tmp->Init(FParsedToken(ETokenType::Equal, "", 0, 0, 0), startExpression, number);
+        lhs = tmp;
     }
     return lhs;
 }
