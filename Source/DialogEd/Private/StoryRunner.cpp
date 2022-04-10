@@ -93,10 +93,12 @@ bool UStoryRunner::HandleIfElseBranching() {
     }
     branchNodeStack.Push(currentNode);
     if (ifNode->Evaluate(this) > 0) {
+        LOG_INFO("Condition is true")
         currentNode = ifBranches->left;
     }
     else {
         if (ifBranches->right) {
+            LOG_INFO("Condition is false")
             currentNode = ifBranches->right;
         }
         else {
@@ -142,16 +144,14 @@ void UStoryRunner::ShiftToNextNode() {
 
     // first, enqueue next token.
     if (!currentNode->right) {
-        LOG_INFO("Popping from branch stack");
         currentNode = branchNodeStack.Pop();
         currentNode = currentNode->right;
         
     }
     else {
-        LOG_INFO("Continue branch flow");
         currentNode = currentNode->right;
-        if (!currentNode->left && !currentNode->right && branchNodeStack.Num() > 0) {
-            LOG_INFO("Found End Node - Popping from branch stack instead");
+        // Gotta be a while here. If we reach the end of a branch that was nested, the next node might be an end node.
+        while (!currentNode->left && !currentNode->right && branchNodeStack.Num() > 0) {
             currentNode = branchNodeStack.Pop();
             currentNode = currentNode->right;
         }
@@ -159,11 +159,9 @@ void UStoryRunner::ShiftToNextNode() {
 
     if (!currentNode || (!currentNode->left && !currentNode->right) && branchNodeStack.Num() == 0) {
         // This is the end. But it's okay.
-        LOG_INFO("Story end detected. brach stack is empty.");
         currentNode = nullptr;
         return;
     }
-    LOG_INFO("Next Node: %s", *UEnum::GetDisplayValueAsText(currentNode->left->token.tokenType).ToString());
 
     if (!HandleBranchingNodeTypes()) {
         return;
@@ -205,7 +203,13 @@ void UStoryRunner::GoToNextDialogNode() {
     }
 }
 
-ERunnerState UStoryRunner::GetCurrent(FDialogData& dialogData) {
+void UStoryRunner::CountNodeRun(UDialogNode* node) {
+    const FString nodeName = node->GetName();
+    int currentValue = FMath::Max(0, dataContext->GetValue(nodeName));
+    GetDataContext()->ForceSetValue(nodeName, ++currentValue);
+}
+
+ERunnerState UStoryRunner::GetCurrent(FDialogData& dialogData) const {
     if (currentNode->Statements()->token.tokenType == ETokenType::Speech ) {
         const auto speech = static_cast<USpeakNode*>(currentNode->left);
         if (actorRegister) {

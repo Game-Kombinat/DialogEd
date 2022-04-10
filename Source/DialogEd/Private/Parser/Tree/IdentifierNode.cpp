@@ -1,10 +1,12 @@
 ﻿#include "Parser/Tree/IdentifierNode.h"
 
 UIdentifierNode::UIdentifierNode() {
+    guid = FGuid::NewGuid();
 }
 
 UIdentifierNode::UIdentifierNode(FParsedToken t, UIdentifierNode* identifierType) {
     Init(t, identifierType);
+    guid = FGuid::NewGuid();
 }
 
 void UIdentifierNode::Init(FParsedToken t, UIdentifierNode* identifierType) {
@@ -20,4 +22,8 @@ FString UIdentifierNode::GetIdentifierType() const {
         }
     }
     return "";
+}
+
+FGuid& UIdentifierNode::GetGuid() {
+    return guid;
 }

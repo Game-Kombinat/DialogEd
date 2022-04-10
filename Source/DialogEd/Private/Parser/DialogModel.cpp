@@ -444,6 +444,7 @@ UDialogNode* FDialogModel::If() {
      */
     const auto ifNode = NewObject<UDialogNode>(owner); // new UNode();
     ifNode->token = currentToken;
+    LOG_INFO("\tStarting IF branch.")
     Next(ETokenType::If);
     // we're now at the spot after the if, which can only be a logic expression
     const auto expression = LogicExpression();
@@ -477,6 +478,7 @@ UDialogNode* FDialogModel::If() {
     }
     // run the else branch if it exists
     if (currentToken.tokenType == ETokenType::Else) {
+        LOG_INFO("\tEntering ELSE branch.")
         Next(ETokenType::Else);
         node = NewObject<UDialogNode>(owner);
         ifBranches->right = node;
@@ -489,6 +491,7 @@ UDialogNode* FDialogModel::If() {
         }
     }
     Next(ETokenType::Endif);
+    LOG_INFO("\tENDIF.")
     if (failed) {
         return nullptr;
     }

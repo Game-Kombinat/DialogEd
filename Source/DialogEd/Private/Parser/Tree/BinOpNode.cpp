@@ -86,17 +86,17 @@ int UBinOpNode::Evaluate(UStoryRunner* storyRunner) const {
         case EOperatorType::Div:
             return GetLeftValue(storyRunner) / FMath::Max(1, GetRightValue(storyRunner));
         case EOperatorType::Less:
-            return GetLeftValue(storyRunner) < FMath::Max(1, GetRightValue(storyRunner)) ? 1 : 0;
+            return GetLeftValue(storyRunner) < GetRightValue(storyRunner) ? 1 : 0;
         case EOperatorType::Greater:
-            return GetLeftValue(storyRunner) > FMath::Max(1, GetRightValue(storyRunner)) ? 1 : 0;
+            return GetLeftValue(storyRunner) > GetRightValue(storyRunner) ? 1 : 0;
         case EOperatorType::LessOrEqual:
-            return GetLeftValue(storyRunner) <= FMath::Max(1, GetRightValue(storyRunner)) ? 1 : 0;
+            return GetLeftValue(storyRunner) <= GetRightValue(storyRunner) ? 1 : 0;
         case EOperatorType::GreaterOrEqual:
-            return GetLeftValue(storyRunner) >= FMath::Max(1, GetRightValue(storyRunner)) ? 1 : 0;
+            return GetLeftValue(storyRunner) >= GetRightValue(storyRunner) ? 1 : 0;
         case EOperatorType::Equal:
-            return GetLeftValue(storyRunner) == FMath::Max(1, GetRightValue(storyRunner)) ? 1 : 0;
+            return GetLeftValue(storyRunner) == GetRightValue(storyRunner) ? 1 : 0;
         case EOperatorType::NotEqual:
-            return GetLeftValue(storyRunner) != FMath::Max(1, GetRightValue(storyRunner)) ? 1 : 0;
+            return GetLeftValue(storyRunner) != GetRightValue(storyRunner) ? 1 : 0;
         case EOperatorType::And: {
             bool lboolAnd = GetLeftValue(storyRunner) > 0;
             bool rboolAnd = GetRightValue(storyRunner) > 0;
@@ -160,6 +160,14 @@ FString UBinOpNode::GetLeftType() const {
 int UBinOpNode::GetNodeValue(UStoryRunner* runner, UDialogNode* node) {
     if (node->token.tokenType == ETokenType::Identifier) {
         auto lval = static_cast<UIdentifierNode*>(node);
+        // MAGIC CONSTANT!
+        if (lval->identifierLabel == "__ran") {
+            const auto nodeName = lval->GetGuid().ToString();
+            const int currentValue = FMath::Max(0, runner->GetVariableValue("", nodeName));
+            runner->SetVariableValue("", nodeName, currentValue + 1);
+
+            return currentValue;
+        }
         return runner->GetVariableValue(lval->GetIdentifierType(), lval->identifierLabel);
     }
     if (node->token.tokenType == ETokenType::NumberLiteral) {

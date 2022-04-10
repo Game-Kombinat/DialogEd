@@ -95,11 +95,13 @@ public:
     int GetVariableValue(const FString& type, const FString& name) const;
     void SetVariableValue(const FString& type, const FString& name, int value) const;
 
-    ERunnerState GetCurrent(FDialogData& dialogData);
+    ERunnerState GetCurrent(FDialogData& dialogData) const;
     
     ERunnerState Next();
 
     ERunnerState NextWithChoice(int choice);
+
+    void CountNodeRun(UDialogNode* node);
 
     UFUNCTION(BlueprintCallable, meta=(Latent))
     void StartThreadFromAsset(UStoryAsset* asset, FString threadName);

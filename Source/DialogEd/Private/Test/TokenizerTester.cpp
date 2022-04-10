@@ -37,6 +37,11 @@ void ATokenizerTester::Tick(float DeltaSeconds) {
     
 }
 
+void ATokenizerTester::RunStory() {
+    runner->StartThreadFromAsset(storyAsset, storyName);
+    SetActorTickEnabled(true);
+}
+
 // Called when the game starts or when spawned
 void ATokenizerTester::BeginPlay() {
     Super::BeginPlay();
