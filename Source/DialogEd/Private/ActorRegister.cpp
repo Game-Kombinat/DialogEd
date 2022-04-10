@@ -7,40 +7,33 @@
 #include "Logging.h"
 #include "Kismet/GameplayStatics.h"
 
-void UActorRegister::Init(UWorld* world, UDataTable* actorTypeData) {
+void UActorRegister::Init(UWorld* world) {
     resolvedActors.Empty();
     this->activeWorld = world;
-    tagToTypeMap = actorTypeData;
 }
 
 UDialogueActor* UActorRegister::GetActorForTag(FName tag) {
     if (resolvedActors.Contains(tag)) {
         return resolvedActors[tag];
     }
-    if (!tagToTypeMap) {
-        return nullptr;
-    }
+   
     const FString contextString;
-    const auto row = tagToTypeMap->FindRow<FActorLookupRow>(tag, contextString);
-    if (!row) {
-        LOG_WARNING("Looking for actor with tag %s - no type map found.", *(tag.ToString()));
-        return nullptr;
-    }
-
-    const auto actor = UGameplayStatics::GetActorOfClass(activeWorld, row->type);
-    if (!actor) {
-        LOG_WARNING("Looking for actor with type %s - none found", *(row->type->GetName()));
-        return nullptr;
-    }
     
-    UDialogueActor* diagActor = Cast<UDialogueActor>(actor->GetComponentByClass(UDialogueActor::StaticClass()));
-    if (!diagActor) {
-        LOG_ERROR("actor with tag %s - has no DialogueActor component on it! ");
+    UGameplayStatics::GetAllActorsWithTag(activeWorld, tag, actorLookupMap);
+    if(actorLookupMap.Num() == 0) {
+        LOG_WARNING("No actors with tag %s exist in current world.", *tag.ToString())
         return nullptr;
     }
-    
-    resolvedActors.Add(tag, diagActor);
-    return diagActor;
+    for (int i = 0; i < actorLookupMap.Num(); ++i) {
+        const auto actor  = actorLookupMap[i];
+        UDialogueActor* diagActor = Cast<UDialogueActor>(actor->GetComponentByClass(UDialogueActor::StaticClass()));
+        if (diagActor) {
+            resolvedActors.Add(tag, diagActor);
+            return diagActor;
+        }
+    }
+    LOG_WARNING("There are actors with tag %s but none has a UDialogueActor component on them!", *tag.ToString())
+    return nullptr;
 }
 
 UDialogueActor* UActorRegister::GetActorForTag(FString tag) {

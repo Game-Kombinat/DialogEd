@@ -36,7 +36,7 @@ enum class ERunnerState : uint8 {
 };
 
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup=(DialogEd), meta=(BlueprintSpawnableComponent))
 class DIALOGED_API UStoryRunner : public UActorComponent, public IDataContextContainer {
     GENERATED_BODY()
 protected:
@@ -65,9 +65,6 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     class UDataTable* commandMapData;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    class UDataTable* actorMapData;
 
     UPROPERTY(Transient)
     class UDialogueCommandRegister* commandRegister;

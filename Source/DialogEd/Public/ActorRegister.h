@@ -15,8 +15,6 @@ UCLASS()
 class DIALOGED_API UActorRegister : public UObject {
     GENERATED_BODY()
 protected:
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    UDataTable* tagToTypeMap;
 
     UPROPERTY(VisibleAnywhere, Transient)
     TMap<FName, UDialogueActor*> resolvedActors;
@@ -24,9 +22,12 @@ protected:
     UPROPERTY(VisibleAnywhere, Transient)
     UWorld* activeWorld;
 
+    UPROPERTY()
+    TArray<AActor*> actorLookupMap; // used for resolving actors.
+
 public:
     /** Mostly useful in editor because resolvedActors will not be wiped between PIE sessions. */
-    void Init(UWorld* world, UDataTable* actorTypeData);
+    void Init(UWorld* world);
 
     UDialogueActor* GetActorForTag(FName tag);
     UDialogueActor* GetActorForTag(FString tag);
